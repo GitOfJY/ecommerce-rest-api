@@ -1,0 +1,47 @@
+@startuml
+!theme _none_
+skinparam shadowing false
+hide members
+
+class User
+class Guest
+class Role
+class UserRole
+class PointWallet
+class PointTransaction
+class Cart
+class CartItem
+class Order
+class OrderProduct
+class Refund
+class Product
+class Category
+class CategoryProduct
+
+User "1" -- "*" UserRole
+Role "1" -- "*" UserRole
+
+User "1" -- "1" PointWallet
+User "1" -- "1" Cart
+User "1" -- "*" Order
+User "1" -- "*" Refund
+
+Guest "1" -- "1" Cart
+Guest "1" -- "*" Order
+
+PointWallet "1" -- "*" PointTransaction
+
+Cart "1" -- "*" CartItem
+
+Order "1" -- "*" OrderProduct
+Order "1" -- "*" PointTransaction
+Order "1" -- "*" Refund
+
+Product "1" -- "*" CartItem
+Product "1" -- "*" OrderProduct
+Product "1" -- "*" CategoryProduct
+
+Category "1" -- "*" Category
+Category "1" -- "*" CategoryProduct
+
+@enduml
