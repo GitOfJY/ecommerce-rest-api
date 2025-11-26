@@ -61,6 +61,8 @@ public class CategoryController {
         return ResponseEntity.ok(ApiResponse.success(categoryService.getCategoryTree(), HttpStatus.OK));
     }
 
+    // 카테고리 별 최다 판매 순위 Top 10 조회
+
     @Operation(
             summary = "카테고리 삭제 API",
             description = "하위 카테고리가 없는 경우에만 카테고리를 삭제합니다."

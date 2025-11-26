@@ -31,4 +31,8 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
         where c.parent is null
     """)
     List<Category> findRootCategoriesWithChildren();
+
+    // 카테고리 별 최다 판매 순위 Top 10 조회
+    // LEFT JOIN + GROUP BY로 카테고리별 통계 쿼리 작성
+
 }

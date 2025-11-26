@@ -50,8 +50,8 @@ public class User {
     @OneToMany(mappedBy = "user")
     private List<Order> orders = new ArrayList<>();
 
-    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
-    private Cart cart;
+    // @OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
+    // private Cart cart;
 
     public void updateUser(UpdateUserRequest req) {
         this.passwordHash = req.getPasswordHash();

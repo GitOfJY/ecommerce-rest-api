@@ -59,6 +59,13 @@ public class Product {
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CategoryProduct> categoryProducts = new ArrayList<>();
 
+    public List<CategoryProduct> getCategoryProducts() {
+        if (categoryProducts == null) {
+            categoryProducts = new ArrayList<>();
+        }
+        return categoryProducts;
+    }
+
     public void updateProduct(UpdateProductRequest req) {
         this.name = req.getName();
         this.description = req.getDescription();

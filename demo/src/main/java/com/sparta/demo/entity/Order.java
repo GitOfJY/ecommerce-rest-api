@@ -39,8 +39,11 @@ public class Order {
     @Column(nullable = false)
     private LocalDateTime orderDate;
 
+    private BigDecimal totalPrice;
+
     public void addOrderProduct(OrderProduct orderProduct) {
         orderProducts.add(orderProduct);
+        orderProduct.assignOrder(this);
     }
 
     // 주문 생성
@@ -54,7 +57,22 @@ public class Order {
         for (OrderProduct orderProduct : orderProducts) {
             order.addOrderProduct(orderProduct);
         }
+
+        order.calculateAndSetTotalPrice();
         return order;
+    }
+
+    public void calculateAndSetTotalPrice() {
+        this.totalPrice = getTotalPrice();
+    }
+
+    // 전체 주문 가격 조회
+    public BigDecimal getTotalPrice() {
+        BigDecimal totalPrice = BigDecimal.ZERO;
+        for (OrderProduct orderProduct : orderProducts) {
+            totalPrice = totalPrice.add(orderProduct.getTotalPrice());
+        }
+        return totalPrice;
     }
 
     // 주문 취소
@@ -73,14 +91,5 @@ public class Order {
         for (OrderProduct orderProduct : orderProducts) {
             orderProduct.cancel();
         }
-    }
-
-    // 전체 주문 가격 조회
-    public BigDecimal getTotalPrice() {
-        BigDecimal totalPrice = BigDecimal.ZERO;
-        for (OrderProduct orderProduct : orderProducts) {
-            totalPrice = totalPrice.add(orderProduct.getTotalPrice());
-        }
-        return totalPrice;
     }
 }

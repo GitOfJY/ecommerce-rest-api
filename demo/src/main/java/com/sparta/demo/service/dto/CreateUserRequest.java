@@ -5,7 +5,6 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Getter
 @NoArgsConstructor(force = true)
@@ -28,16 +27,5 @@ public class CreateUserRequest {
 
     public Long getRoleId() {
         return roleId != null ? roleId : 1L;
-    }
-
-    // 비밀번호 암호화 메서드
-    public CreateUserRequest encodePassword(PasswordEncoder encoder) {
-        return new CreateUserRequest(
-                this.username,
-                this.email,
-                encoder.encode(this.passwordHash),
-                this.address,
-                this.getRoleId()
-        );
     }
 }

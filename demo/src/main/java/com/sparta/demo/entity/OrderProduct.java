@@ -14,7 +14,7 @@ import java.math.BigDecimal;
 @ToString
 @Table(name = "order_product")
 public class OrderProduct {
-    @Id @GeneratedValue
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -27,7 +27,7 @@ public class OrderProduct {
 
     private BigDecimal orderPrice;
 
-    private int quantity;
+    private Integer quantity;
 
     public static OrderProduct createOrderProduct(Product product, BigDecimal orderPrice, int quantity) {
         // 재고차감
@@ -37,7 +37,6 @@ public class OrderProduct {
                 .product(product)
                 .orderPrice(orderPrice)
                 .quantity(quantity).build();
-        product.removeStock(quantity);
         return orderProduct;
     }
 
@@ -47,5 +46,10 @@ public class OrderProduct {
 
     public BigDecimal getTotalPrice() {
         return orderPrice.multiply(BigDecimal.valueOf(quantity));
+    }
+
+    // Order 설정
+    void assignOrder(Order order) {
+        this.order = order;
     }
 }

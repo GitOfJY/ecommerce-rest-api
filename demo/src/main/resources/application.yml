@@ -3,18 +3,18 @@ spring:
     active: dev
 
   # Thymeleaf 설정
-  thymeleaf:
-    cache: false  # 개발 중에는 캐시 끄기 (운영에서는 true)
-    prefix: classpath:/templates/
-    suffix: .html
-    mode: HTML
-    encoding: UTF-8
+    # thymeleaf:
+    # cache: false  # 개발 중에는 캐시 끄기 (운영에서는 true)
+    # prefix: classpath:/templates/
+    # suffix: .html
+    # mode: HTML
+    # encoding: UTF-8
 
     # 정적 리소스 설정
-  web:
-    resources:
-      static-locations: classpath:/static/
-      add-mappings: true
+    # web:
+      # resources:
+      # static-locations: classpath:/static/
+    # add-mappings: true
 
   flyway:
     enabled: true

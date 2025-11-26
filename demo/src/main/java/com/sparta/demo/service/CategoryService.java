@@ -121,4 +121,7 @@ public class CategoryService {
                 .children(childDtos)
                 .build();
     }
+
+    // 카테고리 별 최다 판매 순위 Top 10 조회
+
 }
