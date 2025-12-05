@@ -1,6 +1,7 @@
 package com.jy.shoppy.service;
 
-import com.jy.shoppy.service.dto.CreateCategoryRequest;
+import com.jy.shoppy.domain.category.service.CategoryService;
+import com.jy.shoppy.domain.category.dto.CreateCategoryRequest;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
