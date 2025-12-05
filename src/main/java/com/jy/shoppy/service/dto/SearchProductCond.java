@@ -1,0 +1,13 @@
+package com.jy.shoppy.service.dto;
+
+import com.jy.shoppy.entity.type.StockStatus;
+
+import java.math.BigDecimal;
+
+public record SearchProductCond(
+        Long categoryId,
+        BigDecimal minPrice,
+        BigDecimal maxPrice,
+        String productKeyword,
+        StockStatus stockStatus
+) {}
