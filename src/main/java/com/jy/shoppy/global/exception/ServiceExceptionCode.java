@@ -4,11 +4,18 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.experimental.FieldDefaults;
+import org.springframework.http.HttpStatus;
 
 @Getter
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public enum ServiceExceptionCode {
+    INVALID_TOKEN("잘못된 토큰입니다."),
+    EXPIRED_TOKEN("만료된 토큰입니다."),
+    MISSING_TOKEN("토큰이 누락되었습니다."),
+    UNAUTHORIZED_ACCESS("인증되지 않은 접근입니다."),
+    JSON_PROCESSING_ERROR("Json 데이터 처리 중 에러가 발생하였습니다."),
+
     DUPLICATE_USER_EMAIL("이미 가입된 이메일입니다."),
     CANNOT_FOUND_USER("존재하지 않는 회원입니다."),
 

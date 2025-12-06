@@ -6,7 +6,9 @@ import com.jy.shoppy.domain.category.dto.CategoryTreeResponse;
 import com.jy.shoppy.domain.category.dto.CreateCategoryRequest;
 import com.jy.shoppy.domain.category.dto.UpdateCategoryRequest;
 import com.jy.shoppy.global.response.ApiResponse;
+import com.jy.shoppy.global.util.JsonUtil;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -59,6 +61,24 @@ public class CategoryController {
     @GetMapping("/tree")
     public ResponseEntity<ApiResponse<List<CategoryTreeResponse>>> getAllCategoriesAsTree() {
         return ResponseEntity.ok(ApiResponse.success(categoryService.getCategoryTree(), HttpStatus.OK));
+    }
+
+    @GetMapping("/caches")
+    public ResponseEntity<ApiResponse<List<CategoryResponse>>> findAllCategoriesByCaches(HttpSession session) {
+        final String CATEGORY_CACHE_KEY = "cachedCategoriesJson";
+
+        String cachedCategoriesJson = (String) session.getAttribute(CATEGORY_CACHE_KEY);
+
+        if (cachedCategoriesJson == null) {
+            List<CategoryResponse> freshCategories = categoryService.getAllCategories();
+            session.setAttribute(CATEGORY_CACHE_KEY, JsonUtil.toJson(freshCategories));
+            return ResponseEntity.ok(ApiResponse.success(freshCategories, HttpStatus.OK));
+        }
+
+        List<CategoryResponse> cachedCategories = JsonUtil.fromJsonList(
+                cachedCategoriesJson, CategoryResponse.class
+        );
+        return ResponseEntity.ok(ApiResponse.success(cachedCategories, HttpStatus.OK));
     }
 
     // 카테고리 별 최다 판매 순위 Top 10 조회
