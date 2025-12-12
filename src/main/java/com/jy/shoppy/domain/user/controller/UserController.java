@@ -1,7 +1,6 @@
 package com.jy.shoppy.domain.user.controller;
 
 import com.jy.shoppy.domain.user.service.UserService;
-import com.jy.shoppy.domain.user.dto.CreateUserRequest;
 import com.jy.shoppy.domain.user.dto.UpdateUserRequest;
 import com.jy.shoppy.domain.user.dto.UserResponse;
 import com.jy.shoppy.global.response.ApiResponse;
@@ -19,17 +18,6 @@ import java.util.List;
 @RequestMapping("/api/users")
 public class UserController {
     private final UserService userService;
-
-    @Operation(
-            summary = "사용자 등록 API",
-            description = "새로운 사용자를 등록합니다."
-    )
-    @PostMapping("/new")
-    public ResponseEntity<ApiResponse<Long>> create(@RequestBody @Valid CreateUserRequest req) {
-        Long id = userService.create(req);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(id, HttpStatus.CREATED));
-    }
 
     @Operation(
             summary = "사용자 수정 API",

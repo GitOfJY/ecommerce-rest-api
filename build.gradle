@@ -52,7 +52,7 @@ dependencies {
 
     runtimeOnly 'com.mysql:mysql-connector-j'
 
-    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    // developmentOnly 'org.springframework.boot:spring-boot-devtools'
     compileOnly 'org.projectlombok:lombok'
 
     testCompileOnly 'org.projectlombok:lombok'

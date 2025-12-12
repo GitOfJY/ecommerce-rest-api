@@ -1,7 +1,7 @@
 package com.jy.shoppy.domain.user.entity;
 
+import com.jy.shoppy.domain.auth.dto.RegisterUserRequest;
 import com.jy.shoppy.domain.order.entity.Order;
-import com.jy.shoppy.domain.user.dto.CreateUserRequest;
 import com.jy.shoppy.domain.user.dto.UpdateUserRequest;
 import jakarta.persistence.*;
 import lombok.*;
@@ -61,11 +61,11 @@ public class User {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public static User createUser(CreateUserRequest dto) {
+    public static User registerUser(RegisterUserRequest dto, String encodedPassword) {
         return User.builder()
                 .username(dto.getUsername())
                 .email(dto.getEmail())
-                .passwordHash(dto.getPasswordHash())
+                .passwordHash(encodedPassword)
                 .address(dto.getAddress())
                 .role(Role.ref(dto.getRoleId()))
                 .build();

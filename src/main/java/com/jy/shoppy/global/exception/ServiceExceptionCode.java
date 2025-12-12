@@ -10,17 +10,17 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public enum ServiceExceptionCode {
-    INVALID_TOKEN("잘못된 토큰입니다."),
-    EXPIRED_TOKEN("만료된 토큰입니다."),
-    MISSING_TOKEN("토큰이 누락되었습니다."),
     UNAUTHORIZED_ACCESS("인증되지 않은 접근입니다."),
     JSON_PROCESSING_ERROR("Json 데이터 처리 중 에러가 발생하였습니다."),
 
+    NOT_AUTHENTICATED("로그인이 필요합니다."),
+    INVALID_AUTH_PRINCIPAL("인증 정보를 처리할 수 없습니다."),
+
     DUPLICATE_USER_EMAIL("이미 가입된 이메일입니다."),
     CANNOT_FOUND_USER("존재하지 않는 회원입니다."),
+    UNAUTHORIZED_PASSWORD("비밀번호가 일치하지 않습니다."),
 
     ADMIN_ONLY_REFUND_PROCESS("관리자만 환불 처리가 가능합니다."),
-
 
     NOT_FOUND_PRODUCT("상품을 찾을 수 없습니다."),
     INSUFFICIENT_STOCK("상품의 재고가 부족합니다."),
