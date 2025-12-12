@@ -4,7 +4,6 @@ import com.jy.shoppy.domain.user.entity.User;
 import com.jy.shoppy.domain.user.mapper.UserMapper;
 import com.jy.shoppy.domain.user.repository.UserQueryRepository;
 import com.jy.shoppy.domain.user.repository.UserRepository;
-import com.jy.shoppy.domain.user.dto.CreateUserRequest;
 import com.jy.shoppy.domain.user.dto.UpdateUserRequest;
 import com.jy.shoppy.domain.user.dto.UserResponse;
 import com.jy.shoppy.global.exception.ServiceException;
@@ -23,26 +22,6 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserQueryRepository userQueryRepository;
     private final UserMapper userMapper;
-
-
-    // 회원 가입
-    @Transactional
-    public Long create(CreateUserRequest user) {
-        // 중복 이메일 확인
-        validateDuplicateEmail(user.getEmail());
-
-        User newUser = User.createUser(user);
-        userRepository.save(newUser);
-
-        return newUser.getId();
-    }
-
-    // 중복 이메일 확인
-    private void validateDuplicateEmail(String email) {
-        if (userRepository.existsByEmail(email)) {
-            throw new ServiceException(ServiceExceptionCode.DUPLICATE_USER_EMAIL);
-        }
-    }
 
     // 회원 전체 조회
     public List<UserResponse> findAllUsers() {

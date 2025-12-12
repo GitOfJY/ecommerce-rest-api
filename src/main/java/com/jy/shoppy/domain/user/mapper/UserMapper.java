@@ -3,7 +3,6 @@ package com.jy.shoppy.domain.user.mapper;
 import com.jy.shoppy.domain.order.entity.Order;
 import com.jy.shoppy.domain.order.entity.OrderProduct;
 import com.jy.shoppy.domain.user.entity.User;
-import com.jy.shoppy.domain.user.dto.CreateUserRequest;
 import com.jy.shoppy.domain.prodcut.dto.OrderProductResponse;
 import com.jy.shoppy.domain.user.dto.UserOrderResponse;
 import com.jy.shoppy.domain.user.dto.UserResponse;
@@ -14,8 +13,6 @@ import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface UserMapper {
-
-    User toEntity(CreateUserRequest req);
 
     @Mapping(target = "userOrders", source = "orders")
     UserResponse toResponse(User user);

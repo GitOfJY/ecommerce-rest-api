@@ -1,15 +1,19 @@
-package com.jy.shoppy.domain.user.dto;
+package com.jy.shoppy.domain.auth.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import org.hibernate.validator.constraints.UniqueElements;
 
 @Getter
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @NoArgsConstructor(force = true)
 @AllArgsConstructor
-public class CreateUserRequest {
+public class RegisterUserRequest {
     @NotBlank(message = "이름은 필수입니다.")
     private String username;
 
@@ -23,7 +27,7 @@ public class CreateUserRequest {
     @NotBlank(message = "주소는 필수입니다.")
     private String address;
 
-    private Long roleId = 1L;
+    private Long roleId;
 
     public Long getRoleId() {
         return roleId != null ? roleId : 1L;
