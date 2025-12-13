@@ -1,4 +1,4 @@
-package com.jy.shoppy.global.config.security.config;
+package com.jy.shoppy.global.security.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -1,6 +1,6 @@
-package com.jy.shoppy.global.config.security.dsl;
+package com.jy.shoppy.global.security.dsl;
 
-import com.jy.shoppy.global.config.security.filter.RestAuthenticationFilter;
+import com.jy.shoppy.global.security.filter.RestAuthenticationFilter;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.web.HttpSecurityBuilder;

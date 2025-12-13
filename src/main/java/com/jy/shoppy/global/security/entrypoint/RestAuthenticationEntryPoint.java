@@ -1,4 +1,4 @@
-package com.jy.shoppy.global.config.security.entrypoint;
+package com.jy.shoppy.global.security.entrypoint;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;

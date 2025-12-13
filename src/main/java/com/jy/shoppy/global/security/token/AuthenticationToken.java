@@ -1,4 +1,4 @@
-package com.jy.shoppy.global.config.security.token;
+package com.jy.shoppy.global.security.token;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
