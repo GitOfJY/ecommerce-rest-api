@@ -1,11 +1,11 @@
-package com.jy.shoppy.global.config.security.config;
+package com.jy.shoppy.global.security.config;
 
-import com.jy.shoppy.global.config.security.dsl.RestApiDsl;
-import com.jy.shoppy.global.config.security.entrypoint.RestAuthenticationEntryPoint;
-import com.jy.shoppy.global.config.security.handler.RestAccessDeniedHandler;
-import com.jy.shoppy.global.config.security.handler.RestAuthenticationFailureHandler;
-import com.jy.shoppy.global.config.security.handler.RestAuthenticationSuccessHandler;
-import com.jy.shoppy.global.config.security.provider.RestAuthenticationProvider;
+import com.jy.shoppy.global.security.dsl.RestApiDsl;
+import com.jy.shoppy.global.security.entrypoint.RestAuthenticationEntryPoint;
+import com.jy.shoppy.global.security.handler.RestAccessDeniedHandler;
+import com.jy.shoppy.global.security.handler.RestAuthenticationFailureHandler;
+import com.jy.shoppy.global.security.handler.RestAuthenticationSuccessHandler;
+import com.jy.shoppy.global.security.provider.RestAuthenticationProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

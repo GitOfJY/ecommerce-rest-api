@@ -1,20 +1,15 @@
-package com.jy.shoppy.global.config.security.filter;
+package com.jy.shoppy.global.security.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jy.shoppy.domain.auth.dto.LoginRequest;
-import com.jy.shoppy.global.config.security.token.AuthenticationToken;
+import com.jy.shoppy.global.security.token.AuthenticationToken;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationServiceException;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
-import org.springframework.security.web.context.DelegatingSecurityContextRepository;
-import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
-import org.springframework.security.web.context.RequestAttributeSecurityContextRepository;
-import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.util.StringUtils;
 

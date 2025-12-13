@@ -22,7 +22,7 @@ public enum ServiceExceptionCode {
 
     ADMIN_ONLY_REFUND_PROCESS("관리자만 환불 처리가 가능합니다."),
 
-    NOT_FOUND_PRODUCT("상품을 찾을 수 없습니다."),
+    CANNOT_FOUND_PRODUCT("상품을 찾을 수 없습니다."),
     INSUFFICIENT_STOCK("상품의 재고가 부족합니다."),
 
     DUPLICATED_CATEGORY_NAME("이미 존재하는 카테고리 이름입니다."),
@@ -39,6 +39,8 @@ public enum ServiceExceptionCode {
 
     CANNOT_REQUEST_REFUND_NOT_COMPLETED("COMPLETED 상태의 주문만 환불 요청이 가능합니다."),
     CANNOT_FOUND_REFUND("해당하는 환불건을 찾을 수 없습니다."),
+
+    CANNOT_FOUND_CART("해당하는 장바구니를 찾을 수 없습니다."),
     // ... 다른 예외 코드들
     ;
 

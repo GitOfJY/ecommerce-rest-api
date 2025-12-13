@@ -47,7 +47,7 @@ public class OrderService {
                 .toList();
         List<Product> products = productRepository.findAllById(productIds);
         if (products.size() != req.getProducts().size()) {
-            throw new ServiceException(ServiceExceptionCode.NOT_FOUND_PRODUCT);
+            throw new ServiceException(ServiceExceptionCode.CANNOT_FOUND_PRODUCT);
         }
 
         // (productId, 수량) 맵핑

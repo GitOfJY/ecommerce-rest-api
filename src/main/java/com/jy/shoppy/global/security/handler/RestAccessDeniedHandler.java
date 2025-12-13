@@ -1,4 +1,4 @@
-package com.jy.shoppy.global.config.security.handler;
+package com.jy.shoppy.global.security.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;

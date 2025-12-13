@@ -23,7 +23,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @Table(
-        name = "product",
+        name = "products",
         uniqueConstraints = @UniqueConstraint(name = "uk_product_name", columnNames = "name")
 )
 public class Product {

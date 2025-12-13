@@ -1,9 +1,8 @@
-package com.jy.shoppy.global.config.security.provider;
+package com.jy.shoppy.global.security.provider;
 
 import com.jy.shoppy.domain.auth.dto.Account;
-import com.jy.shoppy.global.config.security.service.CustomUserDetailsService;
-import com.jy.shoppy.global.config.security.token.AuthenticationToken;
-import com.jy.shoppy.global.exception.ServiceException;
+import com.jy.shoppy.global.security.service.CustomUserDetailsService;
+import com.jy.shoppy.global.security.token.AuthenticationToken;
 import com.jy.shoppy.global.exception.ServiceExceptionCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationProvider;

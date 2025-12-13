@@ -6,6 +6,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "cart_products")
@@ -28,17 +32,31 @@ public class CartProduct {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
     @Column(nullable = false)
     private int quantity;
 
-    public void changeQuantity(int quantity) {
-        if (quantity <= 0) throw new IllegalArgumentException("수량은 1 이상이어야 합니다.");
+    public void addQuantity(int quantity) {
+        this.quantity += quantity;
+    }
+
+    public void updateQuantity(int quantity) {
         this.quantity = quantity;
     }
 
-    public void addQuantity(int delta) {
-        int newQty = this.quantity + delta;
-        if (newQty <= 0) throw new IllegalArgumentException("수량은 1 이상이어야 합니다.");
-        this.quantity = newQty;
+    public static CartProduct createCartProduct(Cart cart, Product product, int quantity) {
+        CartProduct  cartProduct = CartProduct.builder()
+                .cart(cart)
+                .product(product)
+                .quantity(quantity)
+                .build();
+        return cartProduct;
     }
 }

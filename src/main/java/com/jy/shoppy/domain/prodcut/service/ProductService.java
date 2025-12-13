@@ -81,7 +81,7 @@ public class ProductService {
     @Transactional
     public ProductResponse update(Long id, UpdateProductRequest req) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ServiceException(ServiceExceptionCode.NOT_FOUND_PRODUCT));
+                .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_PRODUCT));
         product.updateProduct(req);
 
         // 카테고리 수정 있을 때만

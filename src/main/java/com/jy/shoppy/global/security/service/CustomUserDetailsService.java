@@ -1,4 +1,4 @@
-package com.jy.shoppy.global.config.security.service;
+package com.jy.shoppy.global.security.service;
 
 import com.jy.shoppy.domain.auth.mapper.AccountMapper;
 import com.jy.shoppy.domain.user.entity.User;
