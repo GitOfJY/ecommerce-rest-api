@@ -21,14 +21,14 @@ import java.util.List;
 
 @Tag(name = "User Order", description = "사용자 주문 관리 API")
 @RestController
-@RequestMapping("/api/order")
+@RequestMapping("/api/orders")
 @RequiredArgsConstructor
 public class OrderController {
     private final OrderService orderService;
 
     @Operation(
-            summary = "주문 등록 API",
-            description = "새로운 주문을 등록합니다."
+            summary = "회원 주문 등록 API",
+            description = "새로운 회원 주문을 등록합니다."
     )
     @PostMapping
     public ResponseEntity<ApiResponse<OrderResponse>> create(
@@ -36,6 +36,17 @@ public class OrderController {
             @RequestBody @Valid CreateOrderRequest req) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(orderService.create(account, req), HttpStatus.CREATED));
+    }
+
+    @Operation(
+            summary = "비회원 주문 등록 API",
+            description = "새로운 비회원 주문을 등록합니다."
+    )
+    @PostMapping("/guest")
+    public ResponseEntity<ApiResponse<OrderResponse>> createGuestOrder(
+            @RequestBody CreateOrderRequest req) {
+        return ResponseEntity.ok(
+                ApiResponse.success(orderService.createGuestOrder(req)));
     }
 
     @Operation(
