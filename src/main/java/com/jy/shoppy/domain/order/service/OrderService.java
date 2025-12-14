@@ -46,27 +46,24 @@ public class OrderService {
 
     @Transactional
     public OrderResponse create(Account account, CreateOrderRequest req) {
-        Long userId = account.getAccountId() == null ? null : account.getAccountId();
-        User user = null;
+        User user = userRepository.findById(account.getAccountId())
+                .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_USER));
 
-        // 회원 -> 사용자 조회
-        if (userId != null) {
-            user = userRepository.findById(userId)
-                    .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_USER));
-        }
+        return createOrderInternal(user, req, null);
+    }
 
-        // 비회원 - guestPassword null chk
-        if (user == null && !StringUtils.hasText(req.getGuestPassword())) {
+    @Transactional
+    public OrderResponse createGuestOrder(CreateOrderRequest req) {
+        // 비회원 비밀번호 검증
+        if (!StringUtils.hasText(req.getGuestPassword())) {
             throw new ServiceException(ServiceExceptionCode.GUEST_PASSWORD_REQUIRED);
         }
 
-        // 비회원 비밀번호 인코딩
-        String encodedGuestPassword = null;
-        if (userId == null && StringUtils.hasText(req.getGuestPassword())) {
-            encodedGuestPassword = passwordEncoder.encode(req.getGuestPassword());
-        }
+        String encodedPassword = passwordEncoder.encode(req.getGuestPassword());
+        return createOrderInternal(null, req, encodedPassword);
+    }
 
-
+    private OrderResponse createOrderInternal(User user, CreateOrderRequest req, String encodedGuestPassword) {
         // 배송지 생성
         DeliveryAddress deliveryAddress = DeliveryAddress.createDeliveryAddress(user, req);
         deliveryAddressRepository.save(deliveryAddress);
@@ -97,9 +94,8 @@ public class OrderService {
 
         // 주문 생성
         Order order = Order.createOrder(user, deliveryAddress, orderProducts, encodedGuestPassword);
-
-        // 주문 저장 > (Product 재고/상태, Order, OrderProduct 전부 dirty checking 반영) ??
         orderRepository.save(order);
+
         return orderMapper.toResponse(order);
     }
 

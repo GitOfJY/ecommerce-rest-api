@@ -7,7 +7,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.hibernate.validator.constraints.UniqueElements;
 
 @Getter
 @FieldDefaults(level = AccessLevel.PRIVATE)
