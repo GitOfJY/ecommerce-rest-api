@@ -1,7 +1,10 @@
 package com.jy.shoppy.domain.order.service;
 
+import com.jy.shoppy.domain.auth.dto.Account;
+import com.jy.shoppy.domain.order.entity.DeliveryAddress;
 import com.jy.shoppy.domain.order.entity.Order;
 import com.jy.shoppy.domain.order.entity.OrderProduct;
+import com.jy.shoppy.domain.order.repository.DeliveryAddressRepository;
 import com.jy.shoppy.domain.prodcut.entity.Product;
 import com.jy.shoppy.domain.user.entity.User;
 import com.jy.shoppy.domain.order.mapper.OrderMapper;
@@ -17,9 +20,11 @@ import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.jy.shoppy.global.exception.ServiceException;
 import com.jy.shoppy.global.exception.ServiceExceptionCode;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,13 +38,36 @@ public class OrderService {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final OrderQueryRepository orderQueryRepository;
+    private final DeliveryAddressRepository deliveryAddressRepository;
+    private final PasswordEncoder passwordEncoder;
     private final OrderMapper orderMapper;
 
     @Transactional
-    public OrderResponse create(CreateOrderRequest req) {
-        // 사용자 조회
-        User user = userRepository.findById(req.getUserId())
-                .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_USER));
+    public OrderResponse create(Account account, CreateOrderRequest req) {
+        Long userId = account.getAccountId() == null ? null : account.getAccountId();
+        User user = null;
+
+        // 회원 -> 사용자 조회
+        if (userId != null) {
+            user = userRepository.findById(userId)
+                    .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_USER));
+        }
+
+        // 비회원 - guestPassword null chk
+        if (user == null && !StringUtils.hasText(req.getGuestPassword())) {
+            throw new ServiceException(ServiceExceptionCode.GUEST_PASSWORD_REQUIRED);
+        }
+
+        // 비회원 비밀번호 인코딩
+        String encodedGuestPassword = null;
+        if (userId == null && StringUtils.hasText(req.getGuestPassword())) {
+            encodedGuestPassword = passwordEncoder.encode(req.getGuestPassword());
+        }
+
+
+        // 배송지 생성
+        DeliveryAddress deliveryAddress = DeliveryAddress.createDeliveryAddress(user, req);
+        deliveryAddressRepository.save(deliveryAddress);
 
         // 상품 조회
         List<Long> productIds = req.getProducts().stream()
@@ -66,7 +94,7 @@ public class OrderService {
         }
 
         // 주문 생성
-        Order order = Order.createOrder(user, orderProducts);
+        Order order = Order.createOrder(user, deliveryAddress, orderProducts, encodedGuestPassword);
 
         // 주문 저장 > (Product 재고/상태, Order, OrderProduct 전부 dirty checking 반영) ??
         orderRepository.save(order);

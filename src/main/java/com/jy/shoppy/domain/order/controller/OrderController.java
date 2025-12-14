@@ -1,5 +1,6 @@
 package com.jy.shoppy.domain.order.controller;
 
+import com.jy.shoppy.domain.auth.dto.Account;
 import com.jy.shoppy.domain.order.service.OrderService;
 import com.jy.shoppy.domain.order.dto.CreateOrderRequest;
 import com.jy.shoppy.domain.order.dto.OrderResponse;
@@ -12,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,9 +29,11 @@ public class OrderController {
             description = "새로운 주문을 등록합니다."
     )
     @PostMapping
-    public ResponseEntity<ApiResponse<OrderResponse>> create(@RequestBody @Valid CreateOrderRequest req) {
+    public ResponseEntity<ApiResponse<OrderResponse>> create(
+            @AuthenticationPrincipal Account account,
+            @RequestBody @Valid CreateOrderRequest req) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(orderService.create(req), HttpStatus.CREATED));
+                .body(ApiResponse.success(orderService.create(account, req), HttpStatus.CREATED));
     }
 
     @Operation(

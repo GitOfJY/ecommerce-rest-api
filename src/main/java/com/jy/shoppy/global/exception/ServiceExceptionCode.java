@@ -15,6 +15,7 @@ public enum ServiceExceptionCode {
 
     NOT_AUTHENTICATED("로그인이 필요합니다."),
     INVALID_AUTH_PRINCIPAL("인증 정보를 처리할 수 없습니다."),
+    GUEST_PASSWORD_REQUIRED("비회원 주문시 guestPassword는 필수입니다."),
 
     DUPLICATE_USER_EMAIL("이미 가입된 이메일입니다."),
     CANNOT_FOUND_USER("존재하지 않는 회원입니다."),
