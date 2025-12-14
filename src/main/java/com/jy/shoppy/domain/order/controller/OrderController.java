@@ -7,6 +7,7 @@ import com.jy.shoppy.domain.order.dto.OrderResponse;
 import com.jy.shoppy.global.response.ApiResponse;
 import com.jy.shoppy.domain.order.dto.SearchOrderCond;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "User Order", description = "사용자 주문 관리 API")
 @RestController
 @RequestMapping("/api/order")
 @RequiredArgsConstructor
