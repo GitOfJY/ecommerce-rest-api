@@ -40,6 +40,12 @@ public class Order {
     @Column(nullable = false)
     private LocalDateTime orderDate;
 
+    private String guestPassword;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "delivery_address_id")
+    private DeliveryAddress deliveryAddress;
+
     private BigDecimal totalPrice;
 
     public void addOrderProduct(OrderProduct orderProduct) {
@@ -48,11 +54,16 @@ public class Order {
     }
 
     // 주문 생성
-    public static Order createOrder(User user, List<OrderProduct> orderProducts) {
+    public static Order createOrder(User user,
+                                    DeliveryAddress deliveryAddress,
+                                    List<OrderProduct> orderProducts,
+                                    String guestPassword) {
         Order order = Order.builder()
                 .user(user)
                 .status(OrderStatus.PENDING)
                 .orderDate(LocalDateTime.now())
+                .deliveryAddress(deliveryAddress)
+                .guestPassword(guestPassword)
                 .build();
 
         for (OrderProduct orderProduct : orderProducts) {
@@ -61,6 +72,10 @@ public class Order {
 
         order.calculateAndSetTotalPrice();
         return order;
+    }
+
+    public boolean isGuestOrder() {
+        return user == null;
     }
 
     public void calculateAndSetTotalPrice() {

@@ -13,11 +13,13 @@ import java.util.List;
 @Builder
 public class CreateOrderRequest {
     @NotNull
-    private Long userId;
-
-    @NotNull
     private List<OrderProductRequest> products;
 
-    @NotBlank
-    private String shippingAddress;
+    private String guestPassword;
+
+    private String recipientName;
+    private String recipientPhone;
+    private String recipientEmail;
+
+    private String address;
 }
