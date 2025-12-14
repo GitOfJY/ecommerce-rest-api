@@ -43,8 +43,14 @@ public class SecurityConfig {
                 .securityMatcher("/api/**")
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(SECURITY_EXCLUDE_PATHS).permitAll()
+                        // 인증
                         .requestMatchers("/api/auth/**").permitAll()
+                        // 상품 조회 - 누구나 가능
+                        .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
+                        // 주문 - 비회원 주문 허용
                         .requestMatchers(HttpMethod.POST, "/api/orders/guest").permitAll()
+                        .requestMatchers("/api/orders/**").authenticated()
+                        // 관리자 API - ADMIN 권한 필요
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )

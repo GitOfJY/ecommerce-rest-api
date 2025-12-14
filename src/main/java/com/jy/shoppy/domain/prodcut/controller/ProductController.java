@@ -3,6 +3,7 @@ package com.jy.shoppy.domain.prodcut.controller;
 import com.jy.shoppy.domain.prodcut.dto.*;
 import com.jy.shoppy.domain.prodcut.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -12,22 +13,12 @@ import org.springframework.http.ResponseEntity;
 import com.jy.shoppy.global.response.ApiResponse;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "Product", description = "상품 조회 API")
 @RestController
 @RequestMapping("/api/product")
 @RequiredArgsConstructor
 public class ProductController {
     private final ProductService productService;
-
-    @Operation(
-            summary = "상품 등록 API",
-            description = "새로운 상품을 등록합니다."
-    )
-    @PostMapping
-    public ResponseEntity<ApiResponse<Long>> create(@RequestBody @Valid CreateProductRequest req) {
-        Long id = productService.create(req);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(id, HttpStatus.CREATED));
-    }
 
     @Operation(
             summary = "상품 단건 조회 API",
@@ -56,25 +47,5 @@ public class ProductController {
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<Page<ProductResponse>>> searchProducts(SearchProductCond cond, Pageable pageable) {
         return ResponseEntity.ok(ApiResponse.success(productService.searchProductsPage(cond, pageable), HttpStatus.OK));
-    }
-
-    @Operation(
-            summary = "상품 수정 API",
-            description = "상품 ID로 상품을 수정합니다."
-    )
-    @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<ProductResponse>> update(@PathVariable Long id,
-                                                               @RequestBody @Valid UpdateProductRequest req) {
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(ApiResponse.success(productService.update(id, req), HttpStatus.OK));
-    }
-
-    @Operation(
-            summary = "상품 삭제 API",
-            description = "상품 ID로 삭제합니다."
-    )
-    @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Long>> delete(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success(productService.deleteProduct(id)));
     }
 }
