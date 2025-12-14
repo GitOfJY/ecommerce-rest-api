@@ -18,6 +18,7 @@ import com.jy.shoppy.domain.order.dto.OrderResponse;
 import com.jy.shoppy.domain.order.dto.SearchOrderCond;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -33,6 +34,7 @@ import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
+@Slf4j
 public class OrderService {
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
@@ -101,29 +103,37 @@ public class OrderService {
         return orderMapper.toResponse(order);
     }
 
-    public OrderResponse findById(Long orderId) {
-        Order order = orderRepository.findById(orderId)
+    public OrderResponse findMyOrderById(Account account, Long orderId) {
+        Order order = orderRepository.findByIdAndUserId(orderId, account.getAccountId())
                 .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_ORDER));
         return orderMapper.toResponse(order);
     }
 
-    public List<OrderResponse> findAll() {
-        List<Order> orders = orderRepository.findAll();
+    public List<OrderResponse> findMyOrders(Account account) {
+        List<Order> orders = orderRepository.findByUserId(account.getAccountId());
         return orderMapper.toResponseList(orders);
     }
 
     @Transactional
-    public OrderResponse cancel(Long orderId) {
+    public OrderResponse cancelMyOrder(Account account, Long orderId) {
         // 주문 조회
-        Order order = orderRepository.findById(orderId)
+        Order order = orderRepository.findByIdAndUserId(orderId, account.getAccountId())
                 .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_ORDER));
+
         // 주문 취소
         order.cancel();
         return orderMapper.toResponse(order);
     }
 
-    public Page<OrderResponse> searchOrdersPage(SearchOrderCond cond, Pageable pageable) {
-        Page<Order> page = orderQueryRepository.searchOrdersPage(cond, pageable);
+    public Page<OrderResponse> searchOrdersPage(Account account, SearchOrderCond cond, Pageable pageable) {
+        SearchOrderCond userCond = new SearchOrderCond(
+                account.getAccountId(),
+                cond.orderStatus(),
+                cond.startDate(),
+                cond.endDate()
+        );
+
+        Page<Order> page = orderQueryRepository.searchOrdersPage(userCond, pageable);
         return page.map(orderMapper::toResponse);
     }
 }

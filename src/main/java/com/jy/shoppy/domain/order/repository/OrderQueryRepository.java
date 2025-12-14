@@ -28,8 +28,9 @@ public class OrderQueryRepository {
         List<Order> content = queryFactory
                 .selectFrom(order)
             .where(
-                orderStatusEq(cond.orderStatus()),
-                dateBetween(cond.startDate(), cond.endDate())
+                    userIdEq(cond.userId()),
+                    orderStatusEq(cond.orderStatus()),
+                    dateBetween(cond.startDate(), cond.endDate())
             )
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -44,6 +45,10 @@ public class OrderQueryRepository {
                     dateBetween(cond.startDate(), cond.endDate())
                 );
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
+    }
+
+    private BooleanExpression userIdEq(Long userId) {
+        return userId != null ? order.user.id.eq(userId) : null;
     }
 
     private BooleanExpression orderStatusEq(OrderStatus status) {
