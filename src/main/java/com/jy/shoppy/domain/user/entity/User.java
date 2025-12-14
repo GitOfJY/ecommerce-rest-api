@@ -34,6 +34,9 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Column(nullable = false, length = 20)
+    private String phone;
+
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
@@ -65,6 +68,7 @@ public class User {
         return User.builder()
                 .username(dto.getUsername())
                 .email(dto.getEmail())
+                .phone(dto.getPhone())
                 .passwordHash(encodedPassword)
                 .address(dto.getAddress())
                 .role(Role.ref(dto.getRoleId()))

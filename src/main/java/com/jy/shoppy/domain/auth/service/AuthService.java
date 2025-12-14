@@ -29,7 +29,7 @@ public class AuthService {
         validateDuplicateEmail(req.getEmail());
 
         // 패스워드 인코딩
-        String encodedPassword = passwordEncoder.encode(req.getPasswordHash());
+        String encodedPassword = passwordEncoder.encode(req.getPassword());
 
         User newUser = User.registerUser(req, encodedPassword);
         userRepository.save(newUser);
