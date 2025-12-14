@@ -7,6 +7,7 @@ import com.jy.shoppy.domain.order.dto.OrderResponse;
 import com.jy.shoppy.global.response.ApiResponse;
 import com.jy.shoppy.domain.order.dto.SearchOrderCond;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "User Order", description = "사용자 주문 관리 API")
 @RestController
 @RequestMapping("/api/order")
 @RequiredArgsConstructor
@@ -38,20 +40,25 @@ public class OrderController {
 
     @Operation(
             summary = "주문 상세 조회 API",
-            description = "주문 ID로 단일 주문 조회 및 관련 상품 정보 반환합니다."
+            description = "사용자 ID와 주문 ID로 단일 주문 조회 및 관련 상품 정보 반환합니다."
     )
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<OrderResponse>> getOne(@RequestParam("id") Long id) {
-        return ResponseEntity.ok(ApiResponse.success(orderService.findById(id), HttpStatus.OK));
+    public ResponseEntity<ApiResponse<OrderResponse>> getOne(
+            @AuthenticationPrincipal Account account,
+            @RequestParam("id") Long orderId
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(orderService.findMyOrderById(account, orderId), HttpStatus.OK));
     }
 
     @Operation(
             summary = "주문 전체 조회 API",
-            description = "전체 주문 조회 및 관련 상품 정보 반환합니다."
+            description = "사용자 ID로 전체 주문 조회 및 관련 상품 정보 반환합니다."
     )
     @GetMapping
-    public ResponseEntity<ApiResponse<List<OrderResponse>>> getAll() {
-        return ResponseEntity.ok(ApiResponse.success(orderService.findAll(), HttpStatus.OK));
+    public ResponseEntity<ApiResponse<List<OrderResponse>>> getAll(
+            @AuthenticationPrincipal Account account
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(orderService.findMyOrders(account), HttpStatus.OK));
     }
 
     @Operation(
@@ -60,8 +67,9 @@ public class OrderController {
                     "(pending 상태의 주문만 취소 가능)"
     )
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<OrderResponse>> delete(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success(orderService.cancel(id)));
+    public ResponseEntity<ApiResponse<OrderResponse>> delete(@AuthenticationPrincipal Account account,
+                                                             @PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(orderService.cancelMyOrder(account, id)));
     }
 
     @Operation(
@@ -70,7 +78,10 @@ public class OrderController {
                     "(검색 및 필터링 조건: 주문 상태, 날짜)"
     )
     @GetMapping("/search")
-    public ResponseEntity<ApiResponse<Page<OrderResponse>>> searchOrders(SearchOrderCond cond, Pageable pageable) {
-        return ResponseEntity.ok(ApiResponse.success(orderService.searchOrdersPage(cond, pageable), HttpStatus.OK));
+    public ResponseEntity<ApiResponse<Page<OrderResponse>>> searchOrders(
+            @AuthenticationPrincipal Account account,
+            SearchOrderCond cond,
+            Pageable pageable) {
+        return ResponseEntity.ok(ApiResponse.success(orderService.searchOrdersPage(account, cond, pageable), HttpStatus.OK));
     }
 }
