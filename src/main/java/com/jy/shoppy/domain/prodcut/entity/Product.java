@@ -38,14 +38,17 @@ public class Product {
     private String description;
 
     @Column(nullable = false, precision = 13, scale = 2)
-    private BigDecimal price;
+    private BigDecimal price;  // 기본 가격 (옵션 없을 때)
 
     @Column(nullable = false)
-    private Integer stock;
+    private Integer stock;    // 옵션 없는 상품용, 또는 전체 재고
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private StockStatus stockStatus;
+
+    @Column(nullable = false)
+    private Boolean hasOptions;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
@@ -60,11 +63,19 @@ public class Product {
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CategoryProduct> categoryProducts = new ArrayList<>();
 
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductOption> options = new ArrayList<>();
+
     public List<CategoryProduct> getCategoryProducts() {
         if (categoryProducts == null) {
             categoryProducts = new ArrayList<>();
         }
         return categoryProducts;
+    }
+
+    public void addOption(ProductOption option) {
+        this.options.add(option);
+        this.hasOptions = true;
     }
 
     public void updateProduct(UpdateProductRequest req) {
@@ -74,6 +85,16 @@ public class Product {
         this.stock = req.getStock();
         this.updatedAt = LocalDateTime.now();
         updateStockStatus();
+    }
+
+    // 전체 재고 계산 (옵션이 있는 경우)
+    public Integer getTotalStock() {
+        if (hasOptions && !options.isEmpty()) {
+            return options.stream()
+                    .mapToInt(ProductOption::getStock)
+                    .sum();
+        }
+        return this.stock;
     }
 
     // 처음 저장될 때도 상태 세팅되게
