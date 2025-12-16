@@ -1,7 +1,9 @@
 package com.jy.shoppy.domain.cart.service;
 
+import com.jy.shoppy.domain.auth.dto.Account;
 import com.jy.shoppy.domain.cart.dto.CartProductRequest;
 import com.jy.shoppy.domain.cart.dto.CartProductResponse;
+import com.jy.shoppy.domain.cart.dto.UpdateCartQuantityRequest;
 import com.jy.shoppy.domain.cart.entity.Cart;
 import com.jy.shoppy.domain.cart.entity.CartProduct;
 import com.jy.shoppy.domain.cart.mapper.CartMapper;
@@ -64,7 +66,8 @@ public class CartService {
             // 2.2. 존재하지 않는 상품이라면 새로 추가
             Product product = productRepository.findById(request.getProductId())
                     .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_PRODUCT));
-            CartProduct cartProduct = CartProduct.createCartProduct(cart, product, request.getQuantity());
+            // TODO null > product_option으로 수정
+            CartProduct cartProduct = CartProduct.createCartProduct(cart, product, null, request.getQuantity());
             cartProductRepository.save(cartProduct);
         }
     }
@@ -88,6 +91,7 @@ public class CartService {
                     .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_PRODUCT));
 
             guestCart.add(CartProductResponse.builder()
+                            .id(System.currentTimeMillis())  // 임시 ID (타임스탬프)
                             .productId(request.getProductId())
                             .productName(product.getName())
                             .price(product.getPrice())
@@ -114,4 +118,42 @@ public class CartService {
         List<CartProductResponse> cart = (List<CartProductResponse>) session.getAttribute(GUEST_CART_KEY);
         return cart != null ? cart : new ArrayList<>();
     }
+
+    public CartProductResponse updateQuantity(Account account, Long cartProductId, UpdateCartQuantityRequest request, HttpSession session) {
+        Long userId = account.getAccountId();
+        if (userId == null) {
+            return updateQuantityForGuest(request, cartProductId, session);
+        }
+        return updateQuantityForMember(userId, cartProductId, request);
+    }
+
+    private CartProductResponse updateQuantityForMember(Long userId, Long cartProductId, UpdateCartQuantityRequest request) {
+        CartProduct cartProduct = cartProductRepository.findById(cartProductId)
+                .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_PRODUCT));
+
+        if (!cartProduct.getCart().getUser().getId().equals(userId)) {
+            throw  new ServiceException(ServiceExceptionCode.FORBIDDEN_CART_ACCESS);
+        }
+
+        cartProduct.updateQuantity(request.getQuantity());
+        return cartMapper.toResponse(cartProduct);
+    }
+
+    private CartProductResponse updateQuantityForGuest(UpdateCartQuantityRequest request, Long cartProductId, HttpSession session) {
+        List<CartProductResponse> guestCart = getGuestCart(session);
+
+        CartProductResponse cartProduct = guestCart.stream()
+                .filter(p -> p.getId().equals(cartProductId))
+                .findFirst()
+                .orElseThrow();
+
+        cartProduct.updateQuantity(request.getQuantity());
+        session.setAttribute(GUEST_CART_KEY, guestCart);
+
+        return cartProduct;
+    }
+
+
+
+    // 장바구니 특정 물품 삭제 - productId
 }

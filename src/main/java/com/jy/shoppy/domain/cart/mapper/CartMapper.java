@@ -10,6 +10,7 @@ import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface CartMapper {
+    @Mapping(source = "id", target = "id")
     @Mapping(source = "product.id",   target = "productId")
     @Mapping(source = "product.name", target = "productName")
     @Mapping(source = "product.price",target = "price")
