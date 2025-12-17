@@ -40,9 +40,6 @@ public class User {
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
-    @Column(nullable = false)
-    private String address;
-
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -54,12 +51,8 @@ public class User {
     @OneToMany(mappedBy = "user")
     private List<Order> orders = new ArrayList<>();
 
-    // @OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
-    // private Cart cart;
-
     public void updateUser(UpdateUserRequest req) {
         this.passwordHash = req.getPasswordHash();
-        this.address = req.getAddress();
         this.email = req.getEmail();
         this.updatedAt = LocalDateTime.now();
     }
@@ -70,7 +63,6 @@ public class User {
                 .email(dto.getEmail())
                 .phone(dto.getPhone())
                 .passwordHash(encodedPassword)
-                .address(dto.getAddress())
                 .role(Role.ref(dto.getRoleId()))
                 .build();
     }

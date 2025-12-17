@@ -18,11 +18,11 @@ public interface DeliveryAddressRepository extends JpaRepository<DeliveryAddress
 
     boolean existsByUserId(Long userId);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("UPDATE DeliveryAddress d SET d.isDefault = false WHERE d.user.id = :userId")
     void clearDefaultByUserId(@Param("userId") Long userId);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("UPDATE DeliveryAddress d SET d.isDefault = true WHERE d.id = :id")
     void updateDefaultTrue(@Param("id") Long id);
 }

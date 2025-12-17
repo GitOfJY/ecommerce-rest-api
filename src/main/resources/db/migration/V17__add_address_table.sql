@@ -1,42 +1,42 @@
 -- 1. addresses 테이블 신규 생성
-CREATE TABLE addresses (
-                           id BIGINT PRIMARY KEY AUTO_INCREMENT,
-                           zip_code VARCHAR(10),
-                           city VARCHAR(50),
-                           street VARCHAR(100),
-                           detail VARCHAR(100),
-                           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-
--- 2. delivery_addresses 테이블 수정
-ALTER TABLE delivery_addresses ADD COLUMN address_id BIGINT;
-ALTER TABLE delivery_addresses ADD COLUMN alias VARCHAR(50);
+# CREATE TABLE addresses (
+#                            id BIGINT PRIMARY KEY AUTO_INCREMENT,
+#                            zip_code VARCHAR(10),
+#                            city VARCHAR(50),
+#                            street VARCHAR(100),
+#                            detail VARCHAR(100),
+#                            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+# );
+#
+# -- 2. delivery_addresses 테이블 수정
+# ALTER TABLE delivery_addresses ADD COLUMN address_id BIGINT;
+# ALTER TABLE delivery_addresses ADD COLUMN alias VARCHAR(50);
 
 -- 3. 기존 delivery_addresses.address 데이터 이관
-INSERT INTO addresses (street, created_at)
-SELECT address, created_at FROM delivery_addresses WHERE address IS NOT NULL;
+# INSERT INTO addresses (street, created_at)
+# SELECT address, created_at FROM delivery_addresses WHERE address IS NOT NULL;
+#
+# UPDATE delivery_addresses da
+#     JOIN addresses a ON a.street = da.address
+#     SET da.address_id = a.id;
+#
+# ALTER TABLE delivery_addresses DROP COLUMN address;
+#
+# ALTER TABLE delivery_addresses
+#     ADD CONSTRAINT fk_delivery_address_address
+#         FOREIGN KEY (address_id) REFERENCES addresses(id);
 
-UPDATE delivery_addresses da
-    JOIN addresses a ON a.street = da.address
-    SET da.address_id = a.id;
-
-ALTER TABLE delivery_addresses DROP COLUMN address;
-
-ALTER TABLE delivery_addresses
-    ADD CONSTRAINT fk_delivery_address_address
-        FOREIGN KEY (address_id) REFERENCES addresses(id);
-
--- 4. 기존 users.address 데이터 이관
-INSERT INTO addresses (street, created_at)
-SELECT address, NOW() FROM users
-WHERE address IS NOT NULL AND address != ''
-AND address NOT IN (SELECT street FROM addresses WHERE street IS NOT NULL);
+# -- 4. 기존 users.address 데이터 이관
+# INSERT INTO addresses (street, created_at)
+# SELECT address, NOW() FROM users
+# WHERE address IS NOT NULL AND address != ''
+# AND address NOT IN (SELECT street FROM addresses WHERE street IS NOT NULL);
 
 INSERT INTO delivery_addresses (user_id, address_id, recipient_name, recipient_phone, recipient_email, alias, is_default, created_at, updated_at)
 SELECT
     u.id,
     a.id,
-    u.name,
+    u.username,
     COALESCE(u.phone, ''),
     u.email,
     '기본주소',

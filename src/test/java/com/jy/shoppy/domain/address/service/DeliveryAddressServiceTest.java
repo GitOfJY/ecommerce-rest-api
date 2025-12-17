@@ -5,6 +5,7 @@ import com.jy.shoppy.domain.address.dto.DeliveryAddressResponse;
 import com.jy.shoppy.domain.address.entity.DeliveryAddress;
 import com.jy.shoppy.domain.address.repository.DeliveryAddressRepository;
 import com.jy.shoppy.domain.auth.dto.Account;
+import com.jy.shoppy.domain.user.entity.Role;
 import com.jy.shoppy.domain.user.entity.User;
 import com.jy.shoppy.domain.user.repository.UserRepository;
 import com.jy.shoppy.global.exception.ServiceException;
@@ -42,6 +43,7 @@ class DeliveryAddressServiceTest {
                 .passwordHash("password123")
                 .username("테스트유저")
                 .phone("010-1234-5678")
+                .role(Role.ref(1L))
                 .build();
         userRepository.save(user);
 
@@ -96,6 +98,11 @@ class DeliveryAddressServiceTest {
         assertThat(response.getAlias()).isEqualTo("회사");
 
         List<DeliveryAddress> addresses = deliveryAddressRepository.findByUserIdOrderByIsDefaultDesc(user.getId());
+
+        for (DeliveryAddress address : addresses) {
+            System.out.println("address : " + address);
+        }
+
         long defaultCount = addresses.stream().filter(DeliveryAddress::isDefault).count();
         assertThat(defaultCount).isEqualTo(1);
     }
@@ -199,6 +206,7 @@ class DeliveryAddressServiceTest {
                 .passwordHash("password123")
                 .username("다른유저")
                 .phone("010-9999-9999")
+                .role(Role.ref(1L))
                 .build();
         userRepository.save(otherUser);
 
@@ -244,6 +252,7 @@ class DeliveryAddressServiceTest {
                 .passwordHash("password123")
                 .username("다른유저")
                 .phone("010-9999-9999")
+                .role(Role.ref(1L))
                 .build();
         userRepository.save(otherUser);
 

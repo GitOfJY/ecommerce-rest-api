@@ -1,5 +1,6 @@
 package com.jy.shoppy.domain.auth.dto;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -27,9 +28,6 @@ public class RegisterUserRequest {
 
     @NotBlank(message = "비밀번호는 필수입니다.")
     private String password;
-
-    @NotBlank(message = "주소는 필수입니다.")
-    private String address;
 
     private Long roleId;
 
