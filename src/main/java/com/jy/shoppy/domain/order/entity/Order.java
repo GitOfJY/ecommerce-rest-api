@@ -1,5 +1,6 @@
 package com.jy.shoppy.domain.order.entity;
 
+import com.jy.shoppy.domain.address.entity.DeliveryAddress;
 import com.jy.shoppy.domain.user.entity.User;
 import com.jy.shoppy.domain.order.entity.type.OrderStatus;
 import jakarta.persistence.*;

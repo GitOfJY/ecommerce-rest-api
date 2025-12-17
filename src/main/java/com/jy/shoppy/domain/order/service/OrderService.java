@@ -1,10 +1,10 @@
 package com.jy.shoppy.domain.order.service;
 
 import com.jy.shoppy.domain.auth.dto.Account;
-import com.jy.shoppy.domain.order.entity.DeliveryAddress;
+import com.jy.shoppy.domain.address.entity.DeliveryAddress;
 import com.jy.shoppy.domain.order.entity.Order;
 import com.jy.shoppy.domain.order.entity.OrderProduct;
-import com.jy.shoppy.domain.order.repository.DeliveryAddressRepository;
+import com.jy.shoppy.domain.address.repository.DeliveryAddressRepository;
 import com.jy.shoppy.domain.prodcut.entity.Product;
 import com.jy.shoppy.domain.user.entity.User;
 import com.jy.shoppy.domain.order.mapper.OrderMapper;
@@ -65,7 +65,15 @@ public class OrderService {
 
     private OrderResponse createOrderInternal(User user, CreateOrderRequest req, String encodedGuestPassword) {
         // 배송지 생성
-        DeliveryAddress deliveryAddress = DeliveryAddress.createDeliveryAddress(user, req);
+        DeliveryAddress deliveryAddress;
+        if (user != null) {
+            // 회원
+            deliveryAddress = DeliveryAddress.createDeliveryAddress(user, req);
+        } else {
+            // 비회원
+            deliveryAddress = DeliveryAddress.createGuestDeliveryAddress(req);
+        }
+        
         deliveryAddressRepository.save(deliveryAddress);
 
         // 상품 조회

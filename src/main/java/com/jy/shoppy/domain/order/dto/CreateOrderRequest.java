@@ -42,7 +42,16 @@ public class CreateOrderRequest {
     @Schema(description = "수령인 이메일", example = "hong@example.com", required = true)
     private String recipientEmail;
 
+    @Schema(description = "우편번호", example = "06234")
+    private String zipCode;
+
+    @Schema(description = "시/도", example = "서울시")
+    private String city;
+
     @NotBlank(message = "배송 주소는 필수입니다.")
-    @Schema(description = "배송 주소", example = "서울시 강남구 테헤란로 123", required = true)
-    private String address;
+    @Schema(description = "도로명/지번 주소", example = "강남구 테헤란로 123", required = true)
+    private String street;
+
+    @Schema(description = "상세 주소", example = "101동 202호")
+    private String detail;
 }
