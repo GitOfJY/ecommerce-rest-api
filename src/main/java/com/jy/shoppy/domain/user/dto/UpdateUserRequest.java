@@ -1,16 +1,28 @@
 package com.jy.shoppy.domain.user.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotNull;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.wildfly.common.annotation.NotNull;
+import lombok.NoArgsConstructor;
+import lombok.experimental.FieldDefaults;
 
+@Schema(description = "사용자 정보 수정 요청")
 @Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class UpdateUserRequest {
-    @NotNull
-    private Long id;
+    @Schema(description = "사용자 ID", example = "1")
+    @NotNull(message = "사용자 ID는 필수입니다.")
+    Long id;
 
-    private String passwordHash;
+    @Schema(description = "이메일", example = "newemail@example.com")
+    @Email(message = "올바른 이메일 형식이 아닙니다.")
+    String email;
 
-    private String address;
-
-    private String email;
+    @Schema(description = "새 비밀번호 (해싱된 값)", example = "$2a$10$...")
+    String passwordHash;
 }

@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -20,6 +21,7 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
     public static final String[] SECURITY_EXCLUDE_PATHS = {
@@ -50,6 +52,9 @@ public class SecurityConfig {
                         // 주문 - 비회원 주문 허용
                         .requestMatchers(HttpMethod.POST, "/api/orders/guest").permitAll()
                         .requestMatchers("/api/orders/**").authenticated()
+                        // 이메일/비밀번호 찾기
+                        .requestMatchers(HttpMethod.POST, "/api/users/find-email").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/users/reset-password").permitAll()
                         // 관리자 API - ADMIN 권한 필요
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()

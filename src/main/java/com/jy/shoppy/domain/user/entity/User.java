@@ -57,6 +57,10 @@ public class User {
         this.updatedAt = LocalDateTime.now();
     }
 
+    public void updatePassword(String newPassword) {
+        this.passwordHash = newPassword;
+    }
+
     public static User registerUser(RegisterUserRequest dto, String encodedPassword) {
         return User.builder()
                 .username(dto.getUsername())
