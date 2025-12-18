@@ -27,7 +27,7 @@ public class OrderController {
     private final OrderService orderService;
 
     @Operation(
-            summary = "회원 주문 등록 API",
+            summary = "[회원] 주문 등록 API",
             description = "새로운 회원 주문을 등록합니다."
     )
     @PostMapping
@@ -39,7 +39,7 @@ public class OrderController {
     }
 
     @Operation(
-            summary = "비회원 주문 등록 API",
+            summary = "[비회원] 주문 등록 API",
             description = "새로운 비회원 주문을 등록합니다."
     )
     @PostMapping("/guest")
@@ -50,7 +50,7 @@ public class OrderController {
     }
 
     @Operation(
-            summary = "주문 상세 조회 API",
+            summary = "[회원] 주문 상세 조회 API",
             description = "사용자 ID와 주문 ID로 단일 주문 조회 및 관련 상품 정보 반환합니다."
     )
     @GetMapping("/{id}")
@@ -62,7 +62,7 @@ public class OrderController {
     }
 
     @Operation(
-            summary = "주문 전체 조회 API",
+            summary = "[회원] 주문 전체 조회 API",
             description = "사용자 ID로 전체 주문 조회 및 관련 상품 정보 반환합니다."
     )
     @GetMapping
@@ -73,7 +73,7 @@ public class OrderController {
     }
 
     @Operation(
-            summary = "주문 취소 API",
+            summary = "[회원] 주문 취소 API",
             description = "주문 ID로 취소합니다." +
                     "(pending 상태의 주문만 취소 가능)"
     )
@@ -84,7 +84,7 @@ public class OrderController {
     }
 
     @Operation(
-            summary = "주문 검색 API",
+            summary = "[회원] 주문 검색 API",
             description = "주문을 검색합니다." +
                     "(검색 및 필터링 조건: 주문 상태, 날짜)"
     )
