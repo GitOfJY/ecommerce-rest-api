@@ -9,7 +9,6 @@ import com.jy.shoppy.global.exception.ServiceException;
 import com.jy.shoppy.global.exception.ServiceExceptionCode;
 import com.jy.shoppy.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;

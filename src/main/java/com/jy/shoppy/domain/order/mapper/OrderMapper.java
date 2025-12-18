@@ -12,7 +12,6 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface OrderMapper {
     @Mapping(target = "userName",        source = "user.username")
-    @Mapping(target = "shippingAddress", source = "user.address")
     @Mapping(target = "products",        source = "orderProducts")
     @Mapping(target = "totalPrice",      expression = "java(order.getTotalPrice())")
     @Mapping(target = "orderStatus",     source = "status")

@@ -4,10 +4,7 @@ import com.jy.shoppy.domain.address.dto.DeliveryAddressRequest;
 import com.jy.shoppy.domain.order.dto.CreateOrderRequest;
 import com.jy.shoppy.domain.user.entity.User;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -19,6 +16,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
+@ToString
 public class DeliveryAddress {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -47,6 +45,10 @@ public class DeliveryAddress {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    public void updateIsDefault(boolean isDefault) {
+        this.isDefault = isDefault;
+    }
 
     // 회원 주문용
     public static DeliveryAddress createDeliveryAddress(User user, CreateOrderRequest req) {

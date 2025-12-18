@@ -10,6 +10,7 @@ import com.jy.shoppy.domain.user.repository.UserRepository;
 import com.jy.shoppy.global.exception.ServiceException;
 import com.jy.shoppy.global.exception.ServiceExceptionCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +19,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class DeliveryAddressService {
     private final DeliveryAddressRepository deliveryAddressRepository;
     private final UserRepository userRepository;
@@ -30,9 +32,9 @@ public class DeliveryAddressService {
         boolean shouldBeDefault = request.isDefault() || isFirst;
 
         if (shouldBeDefault) {
-            deliveryAddressRepository.clearDefaultByUserId(account.getAccountId());
+            deliveryAddressRepository.findByUserIdAndIsDefaultTrue(account.getAccountId())
+                    .ifPresent(existingDefault -> existingDefault.updateIsDefault(false));
         }
-
         DeliveryAddress deliveryAddress = DeliveryAddress.createDeliveryAddress(user, request, shouldBeDefault);
         deliveryAddressRepository.save(deliveryAddress);
 
