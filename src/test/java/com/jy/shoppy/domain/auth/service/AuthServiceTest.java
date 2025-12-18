@@ -166,7 +166,7 @@ class AuthServiceTest {
     }
 
     @Nested
-    @DisplayName("로그인 상태 확인 테스트")
+    @DisplayName("로그인 상태 확인 테스트 ")
     class GetLoginInfoTest {
 
         @Test
