@@ -4,6 +4,7 @@ package com.jy.shoppy.domain.auth.controller;
 import com.jy.shoppy.domain.auth.dto.LoginRequest;
 import com.jy.shoppy.domain.auth.dto.LoginResponse;
 import com.jy.shoppy.domain.auth.dto.RegisterUserRequest;
+import com.jy.shoppy.domain.auth.dto.RegisterUserResponse;
 import com.jy.shoppy.domain.auth.service.AuthService;
 import com.jy.shoppy.global.exception.ServiceException;
 import com.jy.shoppy.global.exception.ServiceExceptionCode;
@@ -33,12 +34,14 @@ public class AuthController {
             description = "새로운 사용자를 등록합니다."
     )
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<Void>> register(@Valid @RequestBody RegisterUserRequest request) {
-        authService.register(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(null, HttpStatus.CREATED));
+    public ResponseEntity<ApiResponse<RegisterUserResponse>> register(@Valid @RequestBody RegisterUserRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(authService.register(request), HttpStatus.CREATED));
     }
 
-    @Operation(summary = "로그인 API", description = "실제 처리는 Filter에서 수행")
+    @Operation(
+            summary = "로그인 API",
+            description = "사용자가 로그인합니다." +
+                    "(Spring Security가 처리, 이 엔드포인트는 직접 호출되지 않음)")
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
         return null;
@@ -48,15 +51,9 @@ public class AuthController {
             summary = "로그아웃 API",
             description = "사용자가 로그아웃합니다."
     )
-    @GetMapping("/logout")
+    @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(HttpServletRequest request) {
-        SecurityContextHolder.clearContext();
-
-        HttpSession session = request.getSession(false);
-        if (session != null) {
-            session.invalidate();
-        }
-
+        authService.logout(request);
         return ResponseEntity.ok(ApiResponse.success());
     }
 
@@ -66,10 +63,6 @@ public class AuthController {
     )
     @GetMapping("/status")
     public ResponseEntity<ApiResponse<LoginResponse>> checkStatus(Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated() ||
-                authentication instanceof AnonymousAuthenticationToken) {
-            throw new ServiceException(ServiceExceptionCode.CANNOT_FOUND_USER);
-        }
-        return ResponseEntity.ok(ApiResponse.success(authService.getLoginInfo(authentication), HttpStatus.OK));
+        return ResponseEntity.ok(ApiResponse.success(authService.getLoginInfo(authentication)));
     }
 }

@@ -3,6 +3,8 @@ package com.jy.shoppy.domain.auth.dto;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.math.BigDecimal;
+
 @Getter
 @Builder
 @NoArgsConstructor
@@ -13,4 +15,6 @@ public class LoginResponse {
     String email;
     String username;
     String role;
+    String gradeName;
+    BigDecimal discountRate;
 }
