@@ -11,6 +11,7 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
 
@@ -24,6 +25,10 @@ public class Account implements UserDetails {
     String email;
     String password;
     String username;
+
+    String gradeName;
+    BigDecimal discountRate;
+
     List<GrantedAuthority> authorities;
 
     @Override

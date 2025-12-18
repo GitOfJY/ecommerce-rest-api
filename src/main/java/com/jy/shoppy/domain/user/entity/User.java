@@ -8,6 +8,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,6 +52,13 @@ public class User {
     @OneToMany(mappedBy = "user")
     private List<Order> orders = new ArrayList<>();
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "grade_id")
+    private UserGrade userGrade;
+
+    @Column(name = "total_purchase_amount")
+    private BigDecimal totalPurchaseAmount = BigDecimal.ZERO;
+
     public void updateUser(UpdateUserRequest req) {
         this.passwordHash = req.getPasswordHash();
         this.email = req.getEmail();
@@ -65,9 +73,11 @@ public class User {
         return User.builder()
                 .username(dto.getUsername())
                 .email(dto.getEmail())
-                .phone(dto.getPhone())
+                .phone(dto.getPhone().replaceAll("-", ""))
                 .passwordHash(encodedPassword)
                 .role(Role.ref(dto.getRoleId()))
+                .userGrade(UserGrade.ref(1L))
+                .totalPurchaseAmount(BigDecimal.ZERO)
                 .build();
     }
 }
