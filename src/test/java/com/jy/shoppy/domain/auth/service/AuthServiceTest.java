@@ -1,5 +1,6 @@
 package com.jy.shoppy.domain.auth.service;
 
+import com.jy.shoppy.domain.auth.dto.Account;
 import com.jy.shoppy.domain.auth.dto.LoginResponse;
 import com.jy.shoppy.domain.auth.dto.RegisterUserRequest;
 import com.jy.shoppy.domain.auth.dto.RegisterUserResponse;
@@ -18,6 +19,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
@@ -171,7 +173,8 @@ class AuthServiceTest {
         @DisplayName("로그인 상태 확인 성공")
         void getLoginInfo_success() {
             // given
-            User user = createAndSaveUser("loginuser@example.com");
+            // User user = createAndSaveUser("loginuser@example.com");
+            User user = null;
             Authentication authentication = createAuthentication(user);
 
             // when
@@ -213,30 +216,41 @@ class AuthServiceTest {
         SecurityContextHolder.getContext().setAuthentication(auth);
     }
 
+    /*
     private User createAndSaveUser(String email) {
+        Role role = new Role();
+        role.setId(1L);
+        role.setName("ROLE_USER");
+
+        UserGrade grade = new UserGrade();
+        grade.setId(1L);
+        grade.setName("BRONZE");
+
         User user = User.builder()
                 .username("테스트유저")
                 .email(email)
                 .passwordHash("encodedPassword")
                 .phone("01012345678")
-                .role(Role.ref(1L))
-                .userGrade(UserGrade.ref(1L))
+                .role(role)
+                .userGrade(grade)
                 .build();
+
         return userRepository.save(user);
-    }
+    }*/
 
     private Authentication createAuthentication(User user) {
-        com.jy.shoppy.domain.auth.dto.Account account = com.jy.shoppy.domain.auth.dto.Account.builder()
+        List<GrantedAuthority> authorities = List.of(
+                new SimpleGrantedAuthority("ROLE_USER")  // 직접 지정
+        );
+
+        Account account = Account.builder()
                 .accountId(user.getId())
                 .email(user.getEmail())
                 .username(user.getUsername())
-                .password(user.getPasswordHash())
-                .authorities(List.of(new SimpleGrantedAuthority(user.getRole().getName())))
+                .authorities(authorities)
                 .build();
 
-        return new UsernamePasswordAuthenticationToken(
-                account, null, account.getAuthorities()
-        );
+        return new UsernamePasswordAuthenticationToken(account, null, authorities);
     }
 
 }

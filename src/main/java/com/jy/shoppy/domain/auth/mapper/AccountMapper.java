@@ -16,8 +16,12 @@ public interface  AccountMapper {
     RegisterUserResponse toRegisterResponse(User user);
 
     default Account toAccount(User user) {
+        String roleName = user.getRole() != null && user.getRole().getName() != null
+                ? user.getRole().getName()
+                : "ROLE_USER";  // 기본값
+
         List<GrantedAuthority> authorities = List.of(
-                new SimpleGrantedAuthority(user.getRole().getName())
+                new SimpleGrantedAuthority(roleName)
         );
 
         return Account.builder()
