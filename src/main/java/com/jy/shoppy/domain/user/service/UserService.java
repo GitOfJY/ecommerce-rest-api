@@ -1,8 +1,11 @@
 package com.jy.shoppy.domain.user.service;
 
+import com.jy.shoppy.domain.address.repository.DeliveryAddressRepository;
+import com.jy.shoppy.domain.order.repository.OrderRepository;
 import com.jy.shoppy.domain.user.dto.LoginIdRequest;
 import com.jy.shoppy.domain.user.dto.LoginPasswordRequest;
 import com.jy.shoppy.domain.user.entity.User;
+import com.jy.shoppy.domain.user.entity.type.UserStatus;
 import com.jy.shoppy.domain.user.mapper.UserMapper;
 import com.jy.shoppy.domain.user.repository.UserQueryRepository;
 import com.jy.shoppy.domain.user.repository.UserRepository;
@@ -27,18 +30,26 @@ import java.util.stream.Collectors;
 public class UserService {
     private final UserRepository userRepository;
     private final UserQueryRepository userQueryRepository;
+    private final OrderRepository orderRepository;
+    private final DeliveryAddressRepository deliveryAddressRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
 
     // 회원 전체 조회
     public List<UserResponse> findAllUsers() {
-        return userMapper.toResponseList(userRepository.findAll());
+        // 탈퇴 회원 제외
+        return userMapper.toResponseList(userRepository.findAllByStatusNot(UserStatus.WITHDRAWN));
     }
 
     // 회원 ID 단건 조회
     public UserResponse findById(Long id) {
         User findUser = userQueryRepository.getUserById(id)
                 .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_USER));
+
+        if (findUser.isWithdrawn()) {
+            throw new ServiceException(ServiceExceptionCode.ALREADY_WITHDRAWN_USER);
+        }
+
         return userMapper.toResponse(findUser);
     }
 
@@ -47,14 +58,36 @@ public class UserService {
     public Long update(UpdateUserRequest req) {
         User findUser = userRepository.findById(req.getId())
                 .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_USER));
+
+        if (findUser.isWithdrawn()) {
+            throw new ServiceException(ServiceExceptionCode.ALREADY_WITHDRAWN_USER);
+        }
+
         findUser.updateUser(req);
         return findUser.getId();
     }
 
     // 회원 삭제
+    @Transactional
     public void deleteById(Long id) {
-        // TODO : 주문 이력이 있으면 삭제 불가 > 휴면 계정으로 변화
-        userRepository.deleteById(id);
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_USER));
+
+        if (user.isWithdrawn()) {
+            throw new ServiceException(ServiceExceptionCode.ALREADY_WITHDRAWN_USER);
+        }
+
+        // 배송지 삭제 (공통)
+        deliveryAddressRepository.deleteAllByUserId(id);
+
+        boolean hasOrders = orderRepository.existsByUserId(id);
+        if (hasOrders) {
+            // 주문 이력 있으면 익명화
+            user.anonymize();
+        } else {
+            // 주문 이력 없으면 완전 삭제
+            userRepository.delete(user);
+        }
     }
 
     public String findEmail(LoginIdRequest request) {

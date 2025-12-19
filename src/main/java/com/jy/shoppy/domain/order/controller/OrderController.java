@@ -39,7 +39,7 @@ public class OrderController {
     }
 
     @Operation(
-            summary = "[비회원] 주문 등록 API",
+            summary = "[비회원] 비회원 주문 등록 API",
             description = "새로운 비회원 주문을 등록합니다."
     )
     @PostMapping("/guest")
