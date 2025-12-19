@@ -3,8 +3,6 @@ package com.jy.shoppy.domain.user.controller;
 import com.jy.shoppy.domain.user.dto.LoginIdRequest;
 import com.jy.shoppy.domain.user.dto.LoginPasswordRequest;
 import com.jy.shoppy.domain.user.service.UserService;
-import com.jy.shoppy.domain.user.dto.UpdateUserRequest;
-import com.jy.shoppy.domain.user.dto.UserResponse;
 import com.jy.shoppy.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

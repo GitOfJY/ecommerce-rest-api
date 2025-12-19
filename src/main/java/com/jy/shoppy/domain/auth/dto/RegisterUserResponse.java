@@ -10,5 +10,4 @@ public class RegisterUserResponse {
     private String username;
     private String email;
     private String gradeName;
-    private String accessToken;
 }

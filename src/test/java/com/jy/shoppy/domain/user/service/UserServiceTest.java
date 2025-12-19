@@ -6,6 +6,8 @@ import com.jy.shoppy.domain.auth.service.AuthService;
 import com.jy.shoppy.domain.order.entity.Order;
 import com.jy.shoppy.domain.order.entity.type.OrderStatus;
 import com.jy.shoppy.domain.order.repository.OrderRepository;
+import com.jy.shoppy.domain.user.dto.LoginIdRequest;
+import com.jy.shoppy.domain.user.dto.LoginPasswordRequest;
 import com.jy.shoppy.domain.user.dto.UpdateUserRequest;
 import com.jy.shoppy.domain.user.dto.UserResponse;
 import com.jy.shoppy.domain.user.entity.User;
@@ -52,51 +54,28 @@ class UserServiceTest {
 
     @BeforeEach
     void init() {
-        // 기존 데이터 전부 삭제
+        orderRepository.deleteAll();
         userRepository.deleteAll();
 
-        // 관리자 계정 생성, 자동로그인
-        RegisterUserRequest req = RegisterUserRequest.builder()
-                .username("admin")
-                .email("admin@test.com")
-                .password("Test1234@")
-                .phone("010-0000-0000")
-                .roleId(2L)
-                .build();
-
-        RegisterUserResponse response = authService.register(req);
-        Long userId = response.getId();
-        admin = userRepository.findById(userId).get();
+        admin = createTestUser("admin", "admin@test.com", "010-0000-0000", 2L);
     }
 
     @Nested
     @DisplayName("[관리자] 테스트")
     class AdminUserTest {
+
         @Test
         @DisplayName("사용자 전체 조회")
         void admin_find_all_users() {
-            // given - @BeforeEach admin 1 생성
-            log.info("=== 테스트 시작 전 사용자 수: {}", userRepository.count());
-            long beforeTotalCount = userRepository.count();
-
-            RegisterUserRequest userReq = RegisterUserRequest.builder()
-                    .username("user1")
-                    .email("user1@test.com")
-                    .password("Test1234@")
-                    .phone("010-1111-1111")
-                    .roleId(1L)  // 일반 사용자
-                    .build();
-            authService.register(userReq);
+            // given
+            long beforeCount = userRepository.count();
+            createTestUser("user1", "user1@test.com", "010-1111-1111", 1L);
 
             // when
             List<UserResponse> findAllUsers = userService.findAllUsers();
-            log.info("=== 조회된 사용자 수: {}", findAllUsers.size());
-            long afterTotalCount = findAllUsers.size();
 
             // then
-            assertThat(afterTotalCount).isEqualTo(beforeTotalCount + 1);
-            assertThat(findAllUsers).isNotNull();
-            assertThat(findAllUsers).hasSize(2);
+            assertThat(findAllUsers).hasSize((int) beforeCount + 1);
             assertThat(findAllUsers)
                     .extracting(UserResponse::getEmail)
                     .contains("admin@test.com", "user1@test.com");
@@ -108,14 +87,7 @@ class UserServiceTest {
         @DisplayName("사용자 ID 조회")
         void admin_find_user_by_id() {
             // given
-            RegisterUserRequest userReq = RegisterUserRequest.builder()
-                    .username("user1")
-                    .email("user1@test.com")
-                    .password("Test1234@")
-                    .phone("010-1111-1111")
-                    .roleId(1L)  // 일반 사용자
-                    .build();
-            RegisterUserResponse user = authService.register(userReq);
+            User user = createTestUser("user1", "user1@test.com", "010-1111-1111", 1L);
 
             // when
             UserResponse response = userService.findById(user.getId());
@@ -139,17 +111,10 @@ class UserServiceTest {
         }
 
         @Test
-        @DisplayName("사용자 사용자 수정")
+        @DisplayName("사용자 수정")
         void admin_update_user() {
             // given
-            RegisterUserRequest userReq = RegisterUserRequest.builder()
-                    .username("user1")
-                    .email("user1@test.com")
-                    .password("Test1234@")
-                    .phone("010-1111-1111")
-                    .roleId(1L)  // 일반 사용자
-                    .build();
-            RegisterUserResponse user = authService.register(userReq);
+            User user = createTestUser("user1", "user1@test.com", "010-1111-1111", 1L);
 
             String newPassword = "Update1234!";
             UpdateUserRequest req = UpdateUserRequest.builder()
@@ -163,20 +128,17 @@ class UserServiceTest {
             User updateUser = userRepository.findById(user.getId()).get();
 
             // then
-            assertThat(updateUser).isNotNull();
             assertThat(updateUser.getUsername()).isEqualTo("user1");
             assertThat(updateUser.getEmail()).isEqualTo("user1_edit@test.com");
-            assertThat(updateUser.getPasswordHash()).isNotNull();
             assertThat(passwordEncoder.matches(newPassword, updateUser.getPasswordHash())).isTrue();
         }
 
         @Test
-        @DisplayName("사용자 사용자 수정 - 존재하지 않는 ID")
+        @DisplayName("사용자 수정 - 존재하지 않는 ID")
         void admin_update_user_not_found() {
             // given
-            Long invalidId = 99999L;
             UpdateUserRequest req = UpdateUserRequest.builder()
-                    .id(invalidId)
+                    .id(99999L)
                     .email("user1_edit@test.com")
                     .build();
 
@@ -189,14 +151,7 @@ class UserServiceTest {
         @DisplayName("사용자 삭제 - 주문 이력 없으면 완전 삭제")
         void admin_delete_user_without_orders() {
             // given
-            RegisterUserRequest userReq = RegisterUserRequest.builder()
-                    .username("user1")
-                    .email("user1@test.com")
-                    .password("Test1234@")
-                    .phone("010-1111-1111")
-                    .roleId(1L)
-                    .build();
-            RegisterUserResponse user = authService.register(userReq);
+            User user = createTestUser("user1", "user1@test.com", "010-1111-1111", 1L);
             Long userId = user.getId();
 
             // when
@@ -210,25 +165,9 @@ class UserServiceTest {
         @DisplayName("사용자 삭제 - 주문 이력 있으면 익명화")
         void admin_delete_user_with_orders() {
             // given
-            RegisterUserRequest userReq = RegisterUserRequest.builder()
-                    .username("user1")
-                    .email("user1@test.com")
-                    .password("Test1234@")
-                    .phone("010-1111-1111")
-                    .roleId(1L)
-                    .build();
-            RegisterUserResponse user = authService.register(userReq);
+            User user = createTestUser("user1", "user1@test.com", "010-1111-1111", 1L);
             Long userId = user.getId();
-            User savedUser = userRepository.findById(userId).get();
-
-            // 주문 생성
-            Order order = Order.builder()
-                    .user(savedUser)
-                    .status(OrderStatus.COMPLETED)
-                    .orderDate(LocalDateTime.now())
-                    .totalPrice(BigDecimal.valueOf(10000))
-                    .build();
-            orderRepository.save(order);
+            createTestOrder(user);
 
             // when
             userService.deleteById(userId);
@@ -258,20 +197,13 @@ class UserServiceTest {
         @DisplayName("사용자 삭제 - 이미 탈퇴한 사용자")
         void admin_delete_user_already_withdrawn() {
             // given
-            RegisterUserRequest userReq = RegisterUserRequest.builder()
-                    .username("user1")
-                    .email("user1@test.com")
-                    .password("Test1234@")
-                    .phone("010-1111-1111")
-                    .roleId(1L)
-                    .build();
-            RegisterUserResponse user = authService.register(userReq);
+            User user = createTestUser("user1", "user1@test.com", "010-1111-1111", 1L);
             Long userId = user.getId();
+            createTestOrder(user);
 
-            // 첫 번째 삭제 - 완전 삭제
             userService.deleteById(userId);
 
-            // when & then - 다시 삭제 시도 (이미 없는 사용자)
+            // when & then
             assertThatThrownBy(() -> userService.deleteById(userId))
                     .isInstanceOf(ServiceException.class);
         }
@@ -281,5 +213,116 @@ class UserServiceTest {
     @DisplayName("[사용자] 테스트")
     class UserTest {
 
+        @Test
+        @DisplayName("이름, 휴대폰으로 이메일 조회")
+        void user_find_email_by_username_and_phone() {
+            // given
+            createTestUser("user1", "user1@test.com", "010-1111-1111", 1L);
+
+            LoginIdRequest req = LoginIdRequest.builder()
+                    .username("user1")
+                    .phone("01011111111")
+                    .build();
+
+            // when
+            String email = userService.findEmail(req);
+
+            // then
+            assertThat(email).isEqualTo("use***@test.com");
+        }
+
+        @Test
+        @DisplayName("이메일 조회 - 존재하지 않는 사용자")
+        void user_find_email_not_found() {
+            // given
+            LoginIdRequest req = LoginIdRequest.builder()
+                    .username("없는사용자")
+                    .phone("01011111111")
+                    .build();
+
+            // when & then
+            assertThatThrownBy(() -> userService.findEmail(req))
+                    .isInstanceOf(ServiceException.class);
+        }
+
+        @Test
+        @DisplayName("이메일로 임시 비밀번호 발급")
+        void user_request_password_reset_by_email() {
+            // given
+            User user = createTestUser("user1", "user1@test.com", "010-1111-1111", 1L);
+
+            LoginPasswordRequest request = LoginPasswordRequest.builder()
+                    .username("user1")
+                    .email("user1@test.com")
+                    .build();
+
+            // when
+            String tmpPassword = userService.sendTemporaryPassword(request);
+
+            // then
+            assertThat(tmpPassword).isNotNull();
+            assertThat(tmpPassword).hasSize(10);
+
+            User updatedUser = userRepository.findById(user.getId()).get();
+            assertThat(passwordEncoder.matches(tmpPassword, updatedUser.getPasswordHash())).isTrue();
+        }
+
+        @Test
+        @DisplayName("휴대폰 번호로 임시 비밀번호 발급")
+        void user_request_password_reset_by_phone() {
+            // given
+            User user = createTestUser("user1", "user1@test.com", "010-1111-1111", 1L);
+
+            LoginPasswordRequest request = LoginPasswordRequest.builder()
+                    .username("user1")
+                    .phone("01011111111")
+                    .build();
+
+            // when
+            String tmpPassword = userService.sendTemporaryPassword(request);
+
+            // then
+            assertThat(tmpPassword).isNotNull();
+            assertThat(tmpPassword).hasSize(10);
+
+            User updatedUser = userRepository.findById(user.getId()).get();
+            assertThat(passwordEncoder.matches(tmpPassword, updatedUser.getPasswordHash())).isTrue();
+        }
+
+        @Test
+        @DisplayName("임시 비밀번호 발급 - 존재하지 않는 사용자")
+        void user_request_password_reset_not_found() {
+            // given
+            LoginPasswordRequest request = LoginPasswordRequest.builder()
+                    .username("없는사용자")
+                    .email("notfound@test.com")
+                    .build();
+
+            // when & then
+            assertThatThrownBy(() -> userService.sendTemporaryPassword(request))
+                    .isInstanceOf(ServiceException.class);
+        }
+    }
+
+    private User createTestUser(String username, String email, String phone, Long roleId) {
+        RegisterUserRequest req = RegisterUserRequest.builder()
+                .username(username)
+                .email(email)
+                .password("Test1234@")
+                .phone(phone)
+                .roleId(roleId)
+                .build();
+        RegisterUserResponse response = authService.register(req);
+        return userRepository.findById(response.getId()).get();
+    }
+
+    private void createTestOrder(User user) {
+        Order order = Order.builder()
+                .user(user)
+                .status(OrderStatus.COMPLETED)
+                .orderDate(LocalDateTime.now())
+                .totalPrice(BigDecimal.valueOf(10000))
+                .build();
+        orderRepository.save(order);
     }
 }
