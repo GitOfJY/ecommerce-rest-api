@@ -45,7 +45,6 @@ public class UserAdminController {
             summary = "[관리자] 사용자 수정 API",
             description = "사용자 ID로 사용자를 수정합니다."
     )
-    // TODO 주소처리
     @PutMapping
     public ResponseEntity<ApiResponse<Long>> update(@RequestBody @Valid UpdateUserRequest req) {
         Long id = userService.update(req);
@@ -57,7 +56,6 @@ public class UserAdminController {
             summary = "[관리자] 사용자 삭제 API",
             description = "사용자 ID로 삭제합니다."
     )
-    // TODO 주소처리
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {

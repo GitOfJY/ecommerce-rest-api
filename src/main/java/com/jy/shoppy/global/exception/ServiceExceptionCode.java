@@ -21,6 +21,7 @@ public enum ServiceExceptionCode {
     DUPLICATE_USER_EMAIL("이미 가입된 이메일입니다."),
     CANNOT_FOUND_USER("존재하지 않는 회원입니다."),
     UNAUTHORIZED_PASSWORD("비밀번호가 일치하지 않습니다."),
+    ALREADY_WITHDRAWN_USER("탈퇴한 회원입니다."),
 
     ADMIN_ONLY_REFUND_PROCESS("관리자만 환불 처리가 가능합니다."),
 

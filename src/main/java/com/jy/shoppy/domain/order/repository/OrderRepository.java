@@ -34,5 +34,5 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     )
     Optional<Order> findByIdWithProducts(@Param("orderId") Long orderId);
 
-    public boolean existsByOrderProductsProductIdAndStatus(Long productId, OrderStatus status);
+    boolean existsByUserId(Long userId);
 }
