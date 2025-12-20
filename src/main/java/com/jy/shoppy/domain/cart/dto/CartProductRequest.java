@@ -14,7 +14,9 @@ public class CartProductRequest {
     @NotNull(message = "상품 ID는 필수입니다")
     private Long productId;
 
-    private Long productOptionId;
+    private String color;
+
+    private String size;
 
     @NotNull
     @Min(value = 1, message = "최소 수량은 1개입니다.")

@@ -73,6 +73,10 @@ public class Product {
         return categoryProducts;
     }
 
+    public boolean isHasOptions() {
+        return hasOptions;
+    }
+
     public void addOption(ProductOption option) {
         this.options.add(option);
         this.hasOptions = true;

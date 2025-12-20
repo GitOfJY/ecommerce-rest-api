@@ -49,12 +49,12 @@ public class ProductOption {
     private LocalDateTime updatedAt;
 
     // 재고 관리 메서드들
-    public void addStock(int quantity) {
+    public void increaseStock(int quantity) {
         this.stock += quantity;
         updateStockStatus();
     }
 
-    public void removeStock(int quantity) {
+    public void decreaseStock(int quantity) {
         int restStock = this.stock - quantity;
         if (restStock < 0) {
             throw new ServiceException(ServiceExceptionCode.INSUFFICIENT_STOCK);

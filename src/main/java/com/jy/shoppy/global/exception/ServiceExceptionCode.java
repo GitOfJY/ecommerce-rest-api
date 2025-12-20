@@ -27,6 +27,9 @@ public enum ServiceExceptionCode {
 
     CANNOT_FOUND_PRODUCT("상품을 찾을 수 없습니다."),
     INSUFFICIENT_STOCK("상품의 재고가 부족합니다."),
+    INVALID_PRODUCT_OPTION("선택한 옵션이 유효하지 않습니다."),
+    INVALID_QUANTITY("수량은 1개 이상이어야 합니다."),
+    PRODUCT_OPTION_REQUIRED("옵션(색상/사이즈)을 선택해주세요."),
 
     DUPLICATED_CATEGORY_NAME("이미 존재하는 카테고리 이름입니다."),
     NOT_FOUND_CATEGORY("카테고리가 존재하지 않습니다."),
@@ -46,7 +49,7 @@ public enum ServiceExceptionCode {
     CANNOT_FOUND_CART("해당하는 장바구니를 찾을 수 없습니다."),
     CANNOT_FOUND_CART_PRODUCT("해당하는 장바구니의 상품을 찾을 수 없습니다."),
     FORBIDDEN_CART_ACCESS("본인의 장바구니만 접근할 수 있습니다."),
-    INVALID_QUANTITY("수량은 0보다 크거나 같아야 합니다."),
+    CART_ITEM_NOT_FOUND("장바구니에서 상품을 찾을 수 없습니다."),
 
     CANNOT_FOUND_DELIVERY_ADDRESS("해당하는 주소를 찾을 수 없습니다."),
     // ... 다른 예외 코드들
