@@ -40,7 +40,8 @@ public class Product {
     private BigDecimal price;  // 기본 가격 (옵션 없을 때)
 
     @Column(nullable = false)
-    private Boolean hasOptions;
+    @Builder.Default
+    private Boolean hasOptions = false;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
@@ -52,9 +53,11 @@ public class Product {
     @OneToMany(mappedBy = "product")
     private List<OrderProduct> orderProducts;
 
+    @Builder.Default
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CategoryProduct> categoryProducts = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductOption> options = new ArrayList<>();
 
@@ -67,11 +70,6 @@ public class Product {
 
     public boolean isHasOptions() {
         return hasOptions;
-    }
-
-    public void addOption(ProductOption option) {
-        this.options.add(option);
-        this.hasOptions = true;
     }
 
     public void updateProduct(UpdateProductRequest req) {
@@ -102,5 +100,39 @@ public class Product {
         } else {
             return StockStatus.IN_STOCK;
         }
+    }
+
+    public void addCategory(CategoryProduct categoryProduct) {
+        if (this.categoryProducts == null) {
+            this.categoryProducts = new ArrayList<>();
+        }
+        this.categoryProducts.add(categoryProduct);
+    }
+
+    public void clearCategories() {
+        this.categoryProducts.clear();
+    }
+
+    public List<ProductOption> getOptions() {
+        if (options == null) {
+            options = new ArrayList<>();
+        }
+        return options;
+    }
+
+    public void addOption(ProductOption option) {
+        if (this.options == null) {
+            this.options = new ArrayList<>();
+        }
+        this.options.add(option);
+        this.hasOptions = true;
+    }
+
+    public void clearOptions() {
+        this.options.clear();
+    }
+
+    public void setHasOptions(boolean hasOptions) {
+        this.hasOptions = hasOptions;
     }
 }

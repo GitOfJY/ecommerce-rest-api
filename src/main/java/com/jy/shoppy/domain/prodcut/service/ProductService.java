@@ -21,7 +21,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -36,41 +35,47 @@ public class ProductService {
     private final ProductOptionRepository productOptionRepository;
 
     @Transactional
-    public Long create(CreateProductRequest req) {
-        // 카테고리 확인
-        List<Category> categories = categoryRepository.findAllById(req.getCategoryIds());
-        if (categories.size() != req.getCategoryIds().size()) {
-            throw new ServiceException(ServiceExceptionCode.NOT_FOUND_CATEGORY);
-        }
-
+    public ProductResponse create(CreateProductRequest req) {
         // 상품 등록
-        Product product = productMapper.toEntity(req);
+        Product product = Product.builder()
+                .name(req.getName())
+                .description(req.getDescription())
+                .price(req.getPrice())
+                .hasOptions(!req.getOptions().isEmpty())
+                .build();
         Product savedProduct = productRepository.save(product);
 
-        // 카테고리 양방향 맵핑
-        List<CategoryProduct> mappings = new ArrayList<>();
-        for (Category category : categories) {
-            CategoryProduct cp = CategoryProduct.builder()
-                    .category(category)
-                    .product(product)
-                    .build();
-            mappings.add(cp);
+        // 옵션 등록
+        if (req.getOptions() != null && !req.getOptions().isEmpty()) {
+            for (CreateProductRequest.ProductOptionRequest optionReq : req.getOptions()) {
+                ProductOption option = ProductOption.createOption(
+                        savedProduct,
+                        optionReq.getColor(),
+                        optionReq.getSize(),
+                        optionReq.getStock(),
+                        optionReq.getAdditionalPrice()
+                );
+                savedProduct.getOptions().add(option);
+            }
         }
-        product.getCategoryProducts().addAll(mappings);
 
-        // 옵션 생성
-        req.getOptions().forEach((optionReq) -> {
-            ProductOption option = ProductOption.createOption(
-                    savedProduct,
-                    optionReq.getColor(),
-                    optionReq.getSize(),
-                    optionReq.getStock(),
-                    optionReq.getAdditionalPrice()
-            );
-            productOptionRepository.save(option);
-        });
+        // 카테고리 등록
+        if (req.getCategoryIds() != null && !req.getCategoryIds().isEmpty()) {
+            List<Category> categories = categoryRepository.findAllById(req.getCategoryIds());
+            if (categories.size() != req.getCategoryIds().size()) {
+                throw new ServiceException(ServiceExceptionCode.NOT_FOUND_CATEGORY);
+            }
 
-        return product.getId();
+            for (Category category : categories) {
+                CategoryProduct cp = CategoryProduct.builder()
+                        .category(category)
+                        .product(savedProduct)
+                        .build();
+                savedProduct.getCategoryProducts().add(cp);
+            }
+        }
+
+        return productMapper.toResponse(savedProduct);
     }
 
     // 단건조회
@@ -97,35 +102,68 @@ public class ProductService {
     public ProductResponse update(Long id, UpdateProductRequest req) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_PRODUCT));
+
+        // 기본 정보만 update
         product.updateProduct(req);
 
-        // 카테고리 수정 있을 때만
+        // 옵션 수정
+        if (req.getOptions() != null) {
+            updateOptions(product, req.getOptions());
+        }
+
+        // 카테고리 수정
         if (req.getCategoryIds() != null) {
-            List<Long> categoryIds = req.getCategoryIds();
-
-            if (categoryIds.isEmpty()) {
-                product.getCategoryProducts().clear();
-            } else {
-                List<Category> categories = categoryRepository.findAllById(categoryIds);
-                if (categories.size() != categoryIds.size()) {
-                    throw new ServiceException(ServiceExceptionCode.NOT_FOUND_CATEGORY);
-                }
-
-                // 기존 관계 제거
-                product.getCategoryProducts().clear();
-
-                // 양방향 관계 설정
-                for (Category c : categories) {
-                    CategoryProduct cp = CategoryProduct.builder()
-                            .category(c)
-                            .product(product)
-                            .build();
-                    product.getCategoryProducts().add(cp);
-                }
-            }
+            updateCategories(product, req.getCategoryIds());
         }
 
         return productMapper.toResponse(product);
+    }
+
+    private void updateOptions(Product product, List<UpdateProductOptionRequest> optionRequests) {
+        // 빈 리스트면 전체 제거
+        if (optionRequests.isEmpty()) {
+            product.clearOptions();
+            product.setHasOptions(false);
+            return;
+        }
+
+        // 기존 제거 후 새로 추가
+        product.clearOptions();
+        for (UpdateProductOptionRequest req : optionRequests) {
+            ProductOption option = ProductOption.createOption(
+                    product,
+                    req.getColor(),
+                    req.getSize(),
+                    req.getStock(),
+                    req.getAdditionalPrice()
+            );
+            product.addOption(option);
+        }
+        product.setHasOptions(true);
+    }
+
+    private void updateCategories(Product product, List<Long> categoryIds) {
+        // 빈 리스트면 전체 제거
+        if (categoryIds.isEmpty()) {
+            product.clearCategories();
+            return;
+        }
+
+        // 카테고리 조회 및 검증
+        List<Category> categories = categoryRepository.findAllById(categoryIds);
+        if (categories.size() != categoryIds.size()) {
+            throw new ServiceException(ServiceExceptionCode.NOT_FOUND_CATEGORY);
+        }
+
+        // 기존 제거 후 새로 추가
+        product.clearCategories();
+        for (Category category : categories) {
+            CategoryProduct cp = CategoryProduct.builder()
+                    .category(category)
+                    .product(product)
+                    .build();
+            product.addCategory(cp);
+        }
     }
 
     // 삭제
