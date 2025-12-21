@@ -4,7 +4,6 @@ import com.jy.shoppy.domain.prodcut.dto.*;
 import com.jy.shoppy.domain.prodcut.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

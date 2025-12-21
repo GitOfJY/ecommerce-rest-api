@@ -36,6 +36,12 @@ public class CartProduct {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
+    @Column(name = "selected_color", length = 50)
+    private String selectedColor;
+
+    @Column(name = "selected_size", length = 20)
+    private String selectedSize;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -45,37 +51,29 @@ public class CartProduct {
     private LocalDateTime updatedAt;
 
     @Column(nullable = false)
-    private int quantity;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_option_id")
-    private ProductOption productOption;
+    private int quantity = 1;
 
     public void addQuantity(int quantity) {
         this.quantity += quantity;
     }
 
-    public void updateQuantity(int quantity) {
+    public void updateOptions(String selectedColor, String selectedSize, int quantity) {
+        this.selectedColor = selectedColor;
+        this.selectedSize = selectedSize;
         if (quantity <= 0) {
             throw new ServiceException(ServiceExceptionCode.INVALID_QUANTITY);
         }
         this.quantity = quantity;
     }
 
-    public static CartProduct createCartProduct(Cart cart, Product product,  ProductOption option, int quantity) {
-        CartProduct  cartProduct = CartProduct.builder()
+    public static CartProduct createCartProduct(Cart cart, Product product, String color, String size, int quantity) {
+        CartProduct cartProduct = CartProduct.builder()
                 .cart(cart)
                 .product(product)
-                .productOption(option)
+                .selectedColor(color)
+                .selectedSize(size)
                 .quantity(quantity)
                 .build();
         return cartProduct;
-    }
-
-    public BigDecimal getTotalPrice() {
-        BigDecimal unitPrice = productOption != null
-                ? productOption.getTotalPrice()   // 옵션 가격 포함
-                : product.getPrice();             // 기본 가격만
-        return unitPrice.multiply(BigDecimal.valueOf(quantity));
     }
 }

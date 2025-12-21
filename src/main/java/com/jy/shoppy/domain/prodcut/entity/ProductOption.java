@@ -26,10 +26,10 @@ public class ProductOption {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
-    @Column(nullable = false, length = 50)
+    @Column(length = 50)
     private String color;
 
-    @Column(nullable = false, length = 20)
+    @Column(length = 20)
     private String size;
 
     @Column(nullable = false, precision = 13, scale = 2)
@@ -48,13 +48,34 @@ public class ProductOption {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
+    public static ProductOption createOption(Product product, String color, String size, int stock, BigDecimal additionalPrice) {
+        StockStatus status;
+        if (stock == 0) {
+            status = StockStatus.OUT_OF_STOCK;
+        } else if (stock <= 5) {
+            status = StockStatus.LOW_STOCK;
+        } else {
+            status = StockStatus.IN_STOCK;
+        }
+
+        ProductOption option = ProductOption.builder()
+                .product(product)
+                .color(color)
+                .size(size)
+                .stock(stock)
+                .stockStatus(status)
+                .additionalPrice(additionalPrice == null ? BigDecimal.ZERO : additionalPrice)
+                .build();
+        return option;
+    }
+
     // 재고 관리 메서드들
-    public void addStock(int quantity) {
+    public void increaseStock(int quantity) {
         this.stock += quantity;
         updateStockStatus();
     }
 
-    public void removeStock(int quantity) {
+    public void decreaseStock(int quantity) {
         int restStock = this.stock - quantity;
         if (restStock < 0) {
             throw new ServiceException(ServiceExceptionCode.INSUFFICIENT_STOCK);
@@ -63,6 +84,13 @@ public class ProductOption {
         updateStockStatus();
     }
 
+    // 총 가격 계산 (기본 상품 가격 + 옵션 추가 금액)
+    public BigDecimal getTotalPrice() {
+        return product.getPrice().add(additionalPrice);
+    }
+
+    @PrePersist
+    @PreUpdate
     private void updateStockStatus() {
         if (this.stock == 0) {
             this.stockStatus = StockStatus.OUT_OF_STOCK;
@@ -71,10 +99,5 @@ public class ProductOption {
         } else {
             this.stockStatus = StockStatus.IN_STOCK;
         }
-    }
-
-    // 총 가격 계산 (기본 상품 가격 + 옵션 추가 금액)
-    public BigDecimal getTotalPrice() {
-        return product.getPrice().add(additionalPrice);
     }
 }

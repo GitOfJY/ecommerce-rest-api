@@ -1,10 +1,12 @@
 package com.jy.shoppy.domain.order.entity;
 
 import com.jy.shoppy.domain.prodcut.entity.Product;
+import com.jy.shoppy.domain.prodcut.entity.ProductOption;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.util.Objects;
 
 @Entity
 @RequiredArgsConstructor
@@ -21,6 +23,12 @@ public class OrderProduct {
     @JoinColumn(name = "product_id")
     private Product product;
 
+    @Column(name = "selected_color", length = 50)
+    private String selectedColor;
+
+    @Column(name = "selected_size", length = 20)
+    private String selectedSize;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id")
     private Order order;
@@ -29,19 +37,20 @@ public class OrderProduct {
 
     private Integer quantity;
 
-    public static OrderProduct createOrderProduct(Product product, BigDecimal orderPrice, int quantity) {
-        // 재고차감
-        product.removeStock(quantity);
+    public static OrderProduct createOrderProduct(
+            Product product,
+            String color,
+            String size,
+            BigDecimal orderPrice,
+            int quantity) {
 
-        OrderProduct orderProduct = OrderProduct.builder()
+        return OrderProduct.builder()
                 .product(product)
+                .selectedColor(color)
+                .selectedSize(size)
                 .orderPrice(orderPrice)
-                .quantity(quantity).build();
-        return orderProduct;
-    }
-
-    public void cancel() {
-        getProduct().addStock(quantity);
+                .quantity(quantity)
+                .build();
     }
 
     public BigDecimal getTotalPrice() {

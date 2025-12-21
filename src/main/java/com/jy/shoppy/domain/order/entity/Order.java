@@ -105,8 +105,7 @@ public class Order {
         // TODO : "이미 배송완료된 상품은 취소가 불가능합니다."
 
         this.status = OrderStatus.CANCELED;
-        for (OrderProduct orderProduct : orderProducts) {
-            orderProduct.cancel();
-        }
+
+        // 재고 복구 Service에서 처리
     }
 }
