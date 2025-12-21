@@ -27,10 +27,10 @@ public class AdminProductController {
             description = "새로운 상품을 등록합니다."
     )
     @PostMapping
-    public ResponseEntity<ApiResponse<Long>> create(@RequestBody @Valid CreateProductRequest req) {
-        Long id = productService.create(req);
+    public ResponseEntity<ApiResponse<ProductResponse>> create(@RequestBody @Valid CreateProductRequest req) {
+        ProductResponse response = productService.create(req);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(id, HttpStatus.CREATED));
+                .body(ApiResponse.success(response, HttpStatus.CREATED));
     }
 
     @Operation(
