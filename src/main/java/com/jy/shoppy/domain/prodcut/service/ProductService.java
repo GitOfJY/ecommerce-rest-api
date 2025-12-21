@@ -5,9 +5,11 @@ import com.jy.shoppy.domain.prodcut.dto.*;
 import com.jy.shoppy.domain.category.entity.CategoryProduct;
 import com.jy.shoppy.domain.prodcut.entity.Product;
 import com.jy.shoppy.domain.order.entity.type.OrderStatus;
+import com.jy.shoppy.domain.prodcut.entity.ProductOption;
 import com.jy.shoppy.domain.prodcut.mapper.ProductMapper;
 import com.jy.shoppy.domain.category.repository.CategoryRepository;
 import com.jy.shoppy.domain.order.repository.OrderRepository;
+import com.jy.shoppy.domain.prodcut.repository.ProductOptionRepository;
 import com.jy.shoppy.domain.prodcut.repository.ProductQueryRepository;
 import com.jy.shoppy.domain.prodcut.repository.ProductRepository;
 import com.jy.shoppy.global.exception.ServiceException;
@@ -31,6 +33,7 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
     private final ProductQueryRepository productQueryRepository;
     private final OrderRepository orderRepository;
+    private final ProductOptionRepository productOptionRepository;
 
     @Transactional
     public Long create(CreateProductRequest req) {
@@ -42,7 +45,7 @@ public class ProductService {
 
         // 상품 등록
         Product product = productMapper.toEntity(req);
-        productRepository.save(product);
+        Product savedProduct = productRepository.save(product);
 
         // 카테고리 양방향 맵핑
         List<CategoryProduct> mappings = new ArrayList<>();
@@ -54,6 +57,18 @@ public class ProductService {
             mappings.add(cp);
         }
         product.getCategoryProducts().addAll(mappings);
+
+        // 옵션 생성
+        req.getOptions().forEach((optionReq) -> {
+            ProductOption option = ProductOption.createOption(
+                    savedProduct,
+                    optionReq.getColor(),
+                    optionReq.getSize(),
+                    optionReq.getStock(),
+                    optionReq.getAdditionalPrice()
+            );
+            productOptionRepository.save(option);
+        });
 
         return product.getId();
     }

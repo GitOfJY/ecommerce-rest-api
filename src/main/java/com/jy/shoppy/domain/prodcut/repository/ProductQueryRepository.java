@@ -3,6 +3,8 @@ package com.jy.shoppy.domain.prodcut.repository;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.NumberExpression;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.jy.shoppy.domain.prodcut.entity.Product;
@@ -22,6 +24,7 @@ import java.util.List;
 
 import static com.jy.shoppy.domain.category.entity.QCategoryProduct.categoryProduct;
 import static com.jy.shoppy.domain.prodcut.entity.QProduct.product;
+import static com.jy.shoppy.domain.prodcut.entity.QProductOption.productOption;
 
 
 @Repository
@@ -32,7 +35,9 @@ public class ProductQueryRepository {
     public Page<Product> searchProductsPage(SearchProductCond cond, Pageable pageable){
         List<Product> content = queryFactory
                 .selectFrom(product)
+                .distinct()
                 .leftJoin(product.categoryProducts, categoryProduct).fetchJoin()
+                .leftJoin(product.options, productOption)
                 .where(
                         categoryIdEq(cond.categoryId()),
                         priceGoe(cond.minPrice()),
@@ -46,9 +51,10 @@ public class ProductQueryRepository {
                 .fetch();
 
         JPAQuery<Long> countQuery = queryFactory
-                .select(product.count())
+                .select(product.countDistinct())
                 .from(product)
                 .leftJoin(product.categoryProducts, categoryProduct)
+                .leftJoin(product.options, productOption)
                 .where(
                         categoryIdEq(cond.categoryId()),
                         priceGoe(cond.minPrice()),
@@ -80,9 +86,26 @@ public class ProductQueryRepository {
         }
 
         return switch (stockStatus) {
-            case IN_STOCK -> product.stock.gt(0);
-            case OUT_OF_STOCK -> product.stock.eq(0);
-            case LOW_STOCK -> product.stock.loe(5);
+            case IN_STOCK -> JPAExpressions
+                    .select(productOption.stock.sum().coalesce(0))
+                    .from(productOption)
+                    .where(productOption.product.eq(product))
+                    .gt(5);
+            case LOW_STOCK -> JPAExpressions
+                    .select(productOption.stock.sum().coalesce(0))
+                    .from(productOption)
+                    .where(productOption.product.eq(product))
+                    .goe(1)
+                    .and(JPAExpressions
+                            .select(productOption.stock.sum().coalesce(0))
+                            .from(productOption)
+                            .where(productOption.product.eq(product))
+                            .loe(5));
+            case OUT_OF_STOCK -> JPAExpressions
+                    .select(productOption.stock.sum().coalesce(0))
+                    .from(productOption)
+                    .where(productOption.product.eq(product))
+                    .eq(0);
         };
     }
 
@@ -112,8 +135,14 @@ public class ProductQueryRepository {
                     return switch (order.getProperty()) {
                         case "price" -> new OrderSpecifier<>(direction, product.price);
                         case "createdAt" -> new OrderSpecifier<>(direction, product.createdAt);
-                        case "stock" -> new OrderSpecifier<>(direction, product.stock);
                         case "name" -> new OrderSpecifier<>(direction, product.name);
+                        case "totalStock" -> new OrderSpecifier<>(
+                                direction,
+                                JPAExpressions
+                                        .select(productOption.stock.sum().coalesce(0))
+                                        .from(productOption)
+                                        .where(productOption.product.eq(product))
+                        );
                         default -> null;
                     };
                 })

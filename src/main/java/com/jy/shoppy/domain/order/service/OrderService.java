@@ -6,6 +6,8 @@ import com.jy.shoppy.domain.order.entity.Order;
 import com.jy.shoppy.domain.order.entity.OrderProduct;
 import com.jy.shoppy.domain.address.repository.DeliveryAddressRepository;
 import com.jy.shoppy.domain.prodcut.entity.Product;
+import com.jy.shoppy.domain.prodcut.entity.ProductOption;
+import com.jy.shoppy.domain.prodcut.repository.ProductOptionRepository;
 import com.jy.shoppy.domain.user.entity.User;
 import com.jy.shoppy.domain.order.mapper.OrderMapper;
 import com.jy.shoppy.domain.order.repository.OrderQueryRepository;
@@ -27,6 +29,7 @@ import com.jy.shoppy.global.exception.ServiceException;
 import com.jy.shoppy.global.exception.ServiceExceptionCode;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +44,7 @@ public class OrderService {
     private final ProductRepository productRepository;
     private final OrderQueryRepository orderQueryRepository;
     private final DeliveryAddressRepository deliveryAddressRepository;
+    private final ProductOptionRepository productOptionRepository;
     private final PasswordEncoder passwordEncoder;
     private final OrderMapper orderMapper;
 
@@ -76,30 +80,34 @@ public class OrderService {
         
         deliveryAddressRepository.save(deliveryAddress);
 
-        // 상품 조회
-        List<Long> productIds = req.getProducts().stream()
-                .map(OrderProductRequest::getProductId)
-                .toList();
-        List<Product> products = productRepository.findAllById(productIds);
-        if (products.size() != req.getProducts().size()) {
-            throw new ServiceException(ServiceExceptionCode.CANNOT_FOUND_PRODUCT);
-        }
-
-        // (productId, 수량) 맵핑
-        Map<Long, Integer> quantityMap = req.getProducts().stream()
-                .collect(Collectors.toMap(
-                        OrderProductRequest::getProductId,
-                        OrderProductRequest::getQuantity
-                ));
-
-        // 주문상품 생성
         List<OrderProduct> orderProducts = new ArrayList<>();
-        for (Product product : products) {
-            OrderProduct orderProduct =
-                    OrderProduct.createOrderProduct(product, product.getPrice(), quantityMap.get(product.getId()));
+        for (OrderProductRequest item : req.getProducts()) {
+            // 1. 상품 조회
+            Product product = productRepository.findById(item.getProductId())
+                    .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_PRODUCT));
+
+            // 2. ProductOption 조회
+            ProductOption productOption = findProductOption(
+                    item.getProductId(),
+                    item.getColor(),
+                    item.getSize()
+            );
+
+            // 3. 재고 차감 (서비스 레이어)
+            decreaseStock(productOption, item.getQuantity());
+
+            // 4. 주문 가격 계산 (기본가 + 옵션 추가금)
+            BigDecimal orderPrice = productOption.getTotalPrice();
+
+            OrderProduct orderProduct = OrderProduct.createOrderProduct(
+                    product,
+                    item.getColor(),
+                    item.getSize(),
+                    orderPrice,
+                    item.getQuantity()
+            );
             orderProducts.add(orderProduct);
         }
-
         // 주문 생성
         Order order = Order.createOrder(user, deliveryAddress, orderProducts, encodedGuestPassword);
         orderRepository.save(order);
@@ -124,6 +132,9 @@ public class OrderService {
         Order order = orderRepository.findByIdAndUserId(orderId, account.getAccountId())
                 .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_ORDER));
 
+        // 재고 복구
+        order.getOrderProducts().forEach(this::restoreStock);
+
         // 주문 취소
         order.cancel();
         return orderMapper.toResponse(order);
@@ -139,5 +150,24 @@ public class OrderService {
 
         Page<Order> page = orderQueryRepository.searchOrdersPage(userCond, pageable);
         return page.map(orderMapper::toResponse);
+    }
+
+    private ProductOption findProductOption(Long productId, String color, String size) {
+        return productOptionRepository
+                .findByProductIdAndColorAndSize(productId, color, size)
+                .orElseThrow(() -> new ServiceException(ServiceExceptionCode.INVALID_PRODUCT_OPTION));
+    }
+
+    private void decreaseStock(ProductOption productOption, int quantity) {
+        productOption.decreaseStock(quantity);
+    }
+
+    private void restoreStock(OrderProduct orderProduct) {
+        ProductOption productOption = findProductOption(
+                orderProduct.getProduct().getId(),
+                orderProduct.getSelectedColor(),
+                orderProduct.getSelectedSize()
+        );
+        productOption.increaseStock(orderProduct.getQuantity());
     }
 }

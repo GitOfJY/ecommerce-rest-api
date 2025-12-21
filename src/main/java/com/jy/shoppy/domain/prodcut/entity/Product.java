@@ -2,10 +2,9 @@ package com.jy.shoppy.domain.prodcut.entity;
 
 import com.jy.shoppy.domain.category.entity.CategoryProduct;
 import com.jy.shoppy.domain.order.entity.OrderProduct;
+import com.jy.shoppy.domain.prodcut.dto.CreateProductRequest;
 import com.jy.shoppy.domain.prodcut.entity.type.StockStatus;
 import com.jy.shoppy.domain.prodcut.dto.UpdateProductRequest;
-import com.jy.shoppy.global.exception.ServiceException;
-import com.jy.shoppy.global.exception.ServiceExceptionCode;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.BatchSize;
@@ -39,13 +38,6 @@ public class Product {
 
     @Column(nullable = false, precision = 13, scale = 2)
     private BigDecimal price;  // 기본 가격 (옵션 없을 때)
-
-    @Column(nullable = false)
-    private Integer stock;    // 옵션 없는 상품용, 또는 전체 재고
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private StockStatus stockStatus;
 
     @Column(nullable = false)
     private Boolean hasOptions;
@@ -86,49 +78,29 @@ public class Product {
         this.name = req.getName();
         this.description = req.getDescription();
         this.price = req.getPrice();
-        this.stock = req.getStock();
         this.updatedAt = LocalDateTime.now();
-        updateStockStatus();
     }
 
-    // 전체 재고 계산 (옵션이 있는 경우)
+    // 전체 재고 계산 (모든 옵션의 합)
     public Integer getTotalStock() {
-        if (hasOptions && !options.isEmpty()) {
-            return options.stream()
-                    .mapToInt(ProductOption::getStock)
-                    .sum();
+        return options.stream()
+                .mapToInt(ProductOption::getStock)
+                .sum();
+    }
+
+    // 재고 상태 계산
+    public StockStatus getStockStatus() {
+        if (options.isEmpty()) {
+            return StockStatus.OUT_OF_STOCK;
         }
-        return this.stock;
-    }
 
-    // 처음 저장될 때도 상태 세팅되게
-    @PrePersist
-    @PreUpdate
-    private void syncStockStatus() {
-        // 혹시 누락된 경우를 위해 JPA 레벨에서도 한 번 더 안전망
-        updateStockStatus();
-    }
-
-    public void addStock(int quantity) {
-        this.stock += quantity;
-        updateStockStatus();
-    }
-
-    public void removeStock(int quantity) {
-        int restStock = this.stock - quantity;
-        if (restStock < 0) {
-            throw new ServiceException(ServiceExceptionCode.INSUFFICIENT_STOCK);
-        }
-        this.stock = restStock;
-        updateStockStatus();
-    }
-    private void updateStockStatus() {
-        if (this.stock == 0) {
-            this.stockStatus = StockStatus.OUT_OF_STOCK;
-        } else if (this.stock <= 5) {
-            this.stockStatus = StockStatus.LOW_STOCK;
+        int totalStock = getTotalStock();
+        if (totalStock == 0) {
+            return StockStatus.OUT_OF_STOCK;
+        } else if (totalStock <= 5) {
+            return StockStatus.LOW_STOCK;
         } else {
-            this.stockStatus = StockStatus.IN_STOCK;
+            return StockStatus.IN_STOCK;
         }
     }
 }

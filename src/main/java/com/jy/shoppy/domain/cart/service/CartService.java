@@ -61,16 +61,8 @@ public class CartService {
         // 2. 옵션 검증 + 재고 확인
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_PRODUCT));
-        if (product.isHasOptions()) {
-            if (request.getColor() == null || request.getSize() == null) {
-                throw new ServiceException(ServiceExceptionCode.PRODUCT_OPTION_REQUIRED);
-            }
-            validateAndCheckStock(product.getId(), request.getColor(), request.getSize(), request.getQuantity());
-        } else {
-            if (product.getStock() < request.getQuantity()) {
-                throw new ServiceException(ServiceExceptionCode.INSUFFICIENT_STOCK);
-            }
-        }
+
+        validateAndCheckStock(product.getId(), request.getColor(), request.getSize(), request.getQuantity());
 
         // 3. 같은 상품 + 같은 옵션 확인
         Optional<CartProduct> existing = cartProductRepository
@@ -206,22 +198,12 @@ public class CartService {
                 .findFirst()
                 .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CART_ITEM_NOT_FOUND));
 
-        Product product = productRepository.findById(cartProduct.getProductId())
-                .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_PRODUCT));
-
-        if (product.isHasOptions()) {
-            boolean optionChanged = !Objects.equals(cartProduct.getColor(), request.getColor()) ||
-                    !Objects.equals(cartProduct.getSize(), request.getSize());
-            boolean quantityIncreased = request.getQuantity() > cartProduct.getQuantity();
-
-            if (optionChanged || quantityIncreased) {
-                validateAndCheckStock(product.getId(), request.getColor(), request.getSize(), request.getQuantity());
-            }
-        } else {
-            if (product.getStock() < request.getQuantity()) {
-                throw new ServiceException(ServiceExceptionCode.INSUFFICIENT_STOCK);
-            }
-        }
+        validateAndCheckStock(
+                cartProduct.getProductId(),
+                request.getColor(),
+                request.getSize(),
+                request.getQuantity()
+        );
 
         cartProduct.updateOptions(request.getColor(), request.getSize(), request.getQuantity());
         session.setAttribute(GUEST_CART_KEY, guestCart);
