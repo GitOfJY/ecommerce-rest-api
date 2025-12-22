@@ -32,7 +32,6 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
     private final ProductQueryRepository productQueryRepository;
     private final OrderRepository orderRepository;
-    private final ProductOptionRepository productOptionRepository;
 
     @Transactional
     public ProductResponse create(CreateProductRequest req) {
@@ -41,7 +40,6 @@ public class ProductService {
                 .name(req.getName())
                 .description(req.getDescription())
                 .price(req.getPrice())
-                .hasOptions(!req.getOptions().isEmpty())
                 .build();
         Product savedProduct = productRepository.save(product);
 
@@ -81,7 +79,7 @@ public class ProductService {
     // 단건조회
     public ProductResponse getOne(Long id) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Product not found: " + id));
+                .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_PRODUCT));
         return productMapper.toResponse(product);
     }
 
@@ -106,14 +104,14 @@ public class ProductService {
         // 기본 정보만 update
         product.updateProduct(req);
 
-        // 옵션 수정
-        if (req.getOptions() != null) {
-            updateOptions(product, req.getOptions());
-        }
-
         // 카테고리 수정
         if (req.getCategoryIds() != null) {
             updateCategories(product, req.getCategoryIds());
+        }
+
+        // 옵션 수정
+        if (req.getOptions() != null) {
+            updateOptions(product, req.getOptions());
         }
 
         return productMapper.toResponse(product);
@@ -123,7 +121,6 @@ public class ProductService {
         // 빈 리스트면 전체 제거
         if (optionRequests.isEmpty()) {
             product.clearOptions();
-            product.setHasOptions(false);
             return;
         }
 
@@ -139,7 +136,6 @@ public class ProductService {
             );
             product.addOption(option);
         }
-        product.setHasOptions(true);
     }
 
     private void updateCategories(Product product, List<Long> categoryIds) {

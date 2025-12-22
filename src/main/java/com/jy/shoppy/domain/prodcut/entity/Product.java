@@ -39,10 +39,6 @@ public class Product {
     @Column(nullable = false, precision = 13, scale = 2)
     private BigDecimal price;  // 기본 가격 (옵션 없을 때)
 
-    @Column(nullable = false)
-    @Builder.Default
-    private Boolean hasOptions = false;
-
     @CreationTimestamp
     private LocalDateTime createdAt;
 
@@ -66,10 +62,6 @@ public class Product {
             categoryProducts = new ArrayList<>();
         }
         return categoryProducts;
-    }
-
-    public boolean isHasOptions() {
-        return hasOptions;
     }
 
     public void updateProduct(UpdateProductRequest req) {
@@ -125,14 +117,14 @@ public class Product {
             this.options = new ArrayList<>();
         }
         this.options.add(option);
-        this.hasOptions = true;
     }
 
     public void clearOptions() {
         this.options.clear();
     }
 
-    public void setHasOptions(boolean hasOptions) {
-        this.hasOptions = hasOptions;
+    public boolean hasOption() {
+        return options.stream()
+                .anyMatch(opt -> opt.getColor() != null || opt.getSize() != null);
     }
 }

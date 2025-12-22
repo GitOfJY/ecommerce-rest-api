@@ -123,7 +123,6 @@ class CartServiceTest {
                 .name("기본 티셔츠")
                 .description("옵션이 없는 기본 티셔츠입니다.")
                 .price(BigDecimal.valueOf(29000))
-                .hasOptions(false)
                 .build();
         return productRepository.save(product);
     }
@@ -133,7 +132,6 @@ class CartServiceTest {
                 .name("옵션 티셔츠")
                 .description("색상과 사이즈를 선택할 수 있는 티셔츠입니다.")
                 .price(BigDecimal.valueOf(39000))
-                .hasOptions(true)
                 .build();
 
         Product savedProduct = productRepository.save(product);
