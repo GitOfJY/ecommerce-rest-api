@@ -108,4 +108,11 @@ public class Order {
 
         // 재고 복구 Service에서 처리
     }
+
+    public void complete() {
+        if (OrderStatus.CANCELED.equals(status)) {
+            throw new ServiceException(ServiceExceptionCode.CANNOT_CANCEL_ORDER_CANCELED);
+        }
+        this.status = OrderStatus.COMPLETED;
+    }
 }

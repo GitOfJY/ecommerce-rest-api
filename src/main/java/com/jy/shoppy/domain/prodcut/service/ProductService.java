@@ -32,7 +32,6 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
     private final ProductQueryRepository productQueryRepository;
     private final OrderRepository orderRepository;
-    private final ProductOptionRepository productOptionRepository;
 
     @Transactional
     public ProductResponse create(CreateProductRequest req) {
