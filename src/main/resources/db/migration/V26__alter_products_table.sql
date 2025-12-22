@@ -36,3 +36,7 @@ SET @sql = IF(@col_exists > 0,
 PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
+
+ALTER TABLE product_options
+    MODIFY COLUMN color VARCHAR(50) NULL,
+    MODIFY COLUMN size VARCHAR(20) NULL;

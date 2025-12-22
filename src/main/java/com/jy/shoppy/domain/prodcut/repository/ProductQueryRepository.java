@@ -3,7 +3,6 @@ package com.jy.shoppy.domain.prodcut.repository;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -12,6 +11,7 @@ import com.jy.shoppy.domain.prodcut.entity.type.StockStatus;
 import com.jy.shoppy.domain.prodcut.dto.SearchProductCond;
 import com.jy.shoppy.domain.prodcut.dto.SortProductCond;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -29,6 +29,7 @@ import static com.jy.shoppy.domain.prodcut.entity.QProductOption.productOption;
 
 @Repository
 @RequiredArgsConstructor
+@Slf4j
 public class ProductQueryRepository {
     private final JPAQueryFactory queryFactory;
 
@@ -166,6 +167,10 @@ public class ProductQueryRepository {
                     ? product.createdAt.asc()
                     : product.createdAt.desc());
         }
+        // 보조 정렬: createdAt이 같으면 id로
+        orders.add(cond.getCreatedAtSort() == Sort.Direction.ASC
+                ? product.id.asc()
+                : product.id.desc());
 
         // 기본 정렬 (아무 조건 없으면)
         if (orders.isEmpty()) {

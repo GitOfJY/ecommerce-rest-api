@@ -1,11 +1,10 @@
 package com.jy.shoppy.domain.prodcut.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import com.jy.shoppy.domain.prodcut.entity.type.StockStatus;
+import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -13,13 +12,14 @@ import java.util.List;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @NoArgsConstructor
-@AllArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class ProductResponse {
-    private Long id;
-    private String name;
-    private String description;
-    private Long price;
-    private Integer stock;
-    private LocalDateTime createdAt;
-    private List<Long> categoryIds;
+    Long id;
+    String name;
+    String description;
+    BigDecimal price;
+    Integer totalStock;
+    StockStatus stockStatus;
+    LocalDateTime createdAt;
+    List<Long> categoryIds;
 }
