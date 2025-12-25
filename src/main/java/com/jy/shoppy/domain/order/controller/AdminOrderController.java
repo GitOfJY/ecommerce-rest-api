@@ -46,6 +46,16 @@ public class AdminOrderController {
     }
 
     @Operation(
+            summary = "[관리자] 주문 완료 처리 API",
+            description = "주문을 완료 상태로 변경합니다. 회원 주문인 경우 구매금액이 누적되고 등급이 자동으로 승급됩니다."
+    )
+    @PatchMapping("/{id}/complete")
+    public ResponseEntity<ApiResponse<OrderResponse>> completeOrder(@PathVariable Long id) {
+        return ResponseEntity.ok(
+                ApiResponse.success(orderService.complete(id), HttpStatus.OK));
+    }
+
+    @Operation(
             summary = "[관리자] 주문 취소 API",
             description = "모든 주문을 취소할 수 있습니다."
     )

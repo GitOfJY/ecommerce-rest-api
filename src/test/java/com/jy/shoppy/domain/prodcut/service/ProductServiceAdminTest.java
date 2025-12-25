@@ -1,10 +1,15 @@
 package com.jy.shoppy.domain.prodcut.service;
 
+import com.jy.shoppy.domain.address.entity.Address;
+import com.jy.shoppy.domain.address.entity.DeliveryAddress;
+import com.jy.shoppy.domain.address.repository.DeliveryAddressRepository;
 import com.jy.shoppy.domain.auth.dto.RegisterUserRequest;
 import com.jy.shoppy.domain.auth.dto.RegisterUserResponse;
 import com.jy.shoppy.domain.auth.service.AuthService;
 import com.jy.shoppy.domain.category.entity.Category;
 import com.jy.shoppy.domain.category.repository.CategoryRepository;
+import com.jy.shoppy.domain.guest.entity.Guest;
+import com.jy.shoppy.domain.guest.repository.GuestRepository;
 import com.jy.shoppy.domain.order.entity.Order;
 import com.jy.shoppy.domain.order.entity.OrderProduct;
 import com.jy.shoppy.domain.order.entity.type.OrderStatus;
@@ -28,11 +33,14 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.tuple;
@@ -62,6 +70,15 @@ class ProductServiceAdminTest {
 
     @Autowired
     private CategoryRepository categoryRepository;
+
+    @Autowired
+    private DeliveryAddressRepository deliveryAddressRepository;
+
+    @Autowired
+    private GuestRepository guestRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     private Category testCategory;
 
@@ -360,7 +377,6 @@ class ProductServiceAdminTest {
     @Nested
     @DisplayName("상품 삭제 테스트")
     class DeleteProductTest {
-
         @Test
         @DisplayName("상품 삭제 성공")
         void delete_product_success() {
@@ -376,13 +392,39 @@ class ProductServiceAdminTest {
         }
 
         @Test
-        @DisplayName("주문 완료된 상품 삭제 실패")
-        // TODO : order Test 후 수정
+        @DisplayName("회원 주문 완료된 상품 삭제 실패")
         void delete_product_with_completed_order() {
             // given
             Product savedProduct = createAndSaveProduct(10);
             User user = createTestUser("user1", "user1@test.com", "010-1111-1111", 1L);
-            Order order = createTestOrder(user, OrderStatus.COMPLETED);
+
+            // 배송지 생성
+            DeliveryAddress deliveryAddress = createTestDeliveryAddress(user);
+
+            // 주문 생성 (회원)
+            Order order = createTestMemberOrder(user, deliveryAddress, OrderStatus.COMPLETED);
+
+            // 주문 상품 생성
+            createTestOrderProduct(savedProduct, order, 1);
+
+            // when & then
+            assertThatThrownBy(() -> productService.deleteProduct(savedProduct.getId()))
+                    .isInstanceOf(ServiceException.class);
+        }
+
+        @Test
+        @DisplayName("비회원 주문 완료된 상품 삭제 실패")
+        void delete_product_with_guest_completed_order() {
+            // given
+            Product savedProduct = createAndSaveProduct(10);
+
+            // 비회원 생성
+            Guest guest = createTestGuest();
+
+            // 주문 생성 (비회원)
+            Order order = createTestGuestOrder(guest, OrderStatus.COMPLETED);
+
+            // 주문 상품 생성
             createTestOrderProduct(savedProduct, order, 1);
 
             // when & then
@@ -391,7 +433,84 @@ class ProductServiceAdminTest {
         }
     }
 
+    // ==================== 헬퍼 메서드 ====================
 
+    private DeliveryAddress createTestDeliveryAddress(User user) {
+        DeliveryAddress address = DeliveryAddress.builder()
+                .user(user)
+                .recipientName("테스트수령인")
+                .recipientPhone("010-1234-5678")
+                .recipientEmail("test@test.com")
+                .address(Address.builder()
+                        .zipCode("12345")
+                        .city("서울시")
+                        .street("강남구 테헤란로 123")
+                        .detail("테스트빌딩 101호")
+                        .build())
+                .build();
+        return deliveryAddressRepository.save(address);
+    }
+
+    private Guest createTestGuest() {
+        Guest guest = Guest.builder()
+                .name("비회원테스트")
+                .email("guest@test.com")
+                .phone("010-9999-9999")
+                .zipcode("54321")
+                .city("서울시")
+                .street("서초구 서초대로 456")
+                .detail("비회원빌딩 202호")
+                .passwordHash(passwordEncoder.encode("guestpass123"))
+                .build();
+        return guestRepository.save(guest);
+    }
+
+    private Order createTestMemberOrder(User user, DeliveryAddress deliveryAddress, OrderStatus status) {
+        Order order = Order.builder()
+                .user(user)
+                .guest(null)
+                .deliveryAddress(deliveryAddress)
+                .orderNumber(generateTestOrderNumber())
+                .status(status)
+                .orderDate(LocalDateTime.now())
+                .totalPrice(BigDecimal.ZERO)
+                .build();
+        return orderRepository.save(order);
+    }
+
+    private Order createTestGuestOrder(Guest guest, OrderStatus status) {
+        Order order = Order.builder()
+                .user(null)
+                .guest(guest)
+                .deliveryAddress(null) // 비회원은 deliveryAddress null
+                .orderNumber(generateTestOrderNumber())
+                .status(status)
+                .orderDate(LocalDateTime.now())
+                .totalPrice(BigDecimal.ZERO)
+                .build();
+        return orderRepository.save(order);
+    }
+
+    private void createTestOrderProduct(Product product, Order order, int quantity) {
+        OrderProduct orderProduct = OrderProduct.builder()
+                .order(order)
+                .product(product)
+                .selectedColor("Black")
+                .selectedSize("M")
+                .orderPrice(product.getPrice())
+                .quantity(quantity)
+                .build();
+
+        order.addOrderProduct(orderProduct);
+        order.calculateAndSetTotalPrice(); // totalPrice 계산
+        orderRepository.save(order);
+    }
+
+    private String generateTestOrderNumber() {
+        String datePart = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String randomPart = UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
+        return "ORD" + datePart + randomPart;
+    }
 
     private CreateProductRequest.ProductOptionRequest createOptionRequest(
             String color, String size, int stock, int additionalPrice) {
@@ -466,25 +585,6 @@ class ProductServiceAdminTest {
                 .build();
         RegisterUserResponse response = authService.register(req);
         return userRepository.findById(response.getId()).orElseThrow();
-    }
-
-    private Order createTestOrder(User user, OrderStatus status) {
-        Order order = Order.builder()
-                .user(user)
-                .status(status)
-                .orderDate(LocalDateTime.now())
-                .totalPrice(BigDecimal.valueOf(10000))
-                .build();
-        return orderRepository.save(order);
-    }
-
-    private void createTestOrderProduct(Product product, Order order, int quantity) {
-        OrderProduct orderProduct = OrderProduct.builder()
-                .product(product)
-                .order(order)
-                .quantity(quantity)
-                .build();
-        // return orderProductRepository.save(orderProduct);
     }
 
     private void assertProductBasicInfo(Product product, String name, String description, BigDecimal price) {

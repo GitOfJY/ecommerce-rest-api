@@ -124,6 +124,10 @@ public class Order {
     }
 
     public void complete() {
+        if (OrderStatus.COMPLETED.equals(status)) {
+            throw new ServiceException(ServiceExceptionCode.ALREADY_COMPLETED_ORDER);
+        }
+
         if (OrderStatus.CANCELED.equals(status)) {
             throw new ServiceException(ServiceExceptionCode.CANNOT_CANCEL_ORDER_CANCELED);
         }

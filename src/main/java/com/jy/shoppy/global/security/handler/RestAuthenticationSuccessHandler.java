@@ -3,9 +3,14 @@ package com.jy.shoppy.global.security.handler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jy.shoppy.domain.auth.dto.Account;
 import com.jy.shoppy.domain.auth.dto.LoginResponse;
+import com.jy.shoppy.domain.user.entity.User;
+import com.jy.shoppy.domain.user.repository.UserRepository;
+import com.jy.shoppy.global.exception.ServiceException;
+import com.jy.shoppy.global.exception.ServiceExceptionCode;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
@@ -17,8 +22,10 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 
 @Component("restSuccessHandler")
+@RequiredArgsConstructor
 public class RestAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final UserRepository userRepository;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
@@ -37,6 +44,8 @@ public class RestAuthenticationSuccessHandler implements AuthenticationSuccessHa
                 .userId(account.getAccountId())
                 .email(account.getEmail())
                 .username(account.getUsername())
+                .gradeName(account.getGradeName())
+                .discountRate(account.getDiscountRate())
                 .role(role)
                 .build();
 

@@ -16,6 +16,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT u FROM User u " +
             "   JOIN FETCH u.role " +
+            "   JOIN FETCH u.userGrade " +
             "   WHERE u.email = :email")
     Optional<User> findByEmail(@Param("email") String email);
 
@@ -35,4 +36,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
             @Param("username") String username);
 
     List<User> findAllByStatusNot(UserStatus status);
+
+    @Query("SELECT u FROM User u " +
+            "   JOIN FETCH u.role " +
+            "   JOIN FETCH u.userGrade " +
+            "   WHERE u.id = :id")
+    Optional<User> findByIdWithGrade(@Param("id") Long id);
 }

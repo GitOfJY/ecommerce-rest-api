@@ -22,16 +22,6 @@ public class RestAuthenticationFilter extends AbstractAuthenticationProcessingFi
         super(PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, defaultFilterProcessesUrl));
     }
 
-//    public SecurityContextRepository getSecurityContextRepository(HttpSecurity http) {
-//        SecurityContextRepository securityContextRepository = http.getSharedObject(SecurityContextRepository.class);
-//        if (securityContextRepository == null) {
-//            securityContextRepository = new DelegatingSecurityContextRepository(
-//                    new RequestAttributeSecurityContextRepository(), new HttpSessionSecurityContextRepository()
-//            );
-//        }
-//        return securityContextRepository;
-//    }
-
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request,
                                                 HttpServletResponse response)

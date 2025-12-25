@@ -30,6 +30,8 @@ public interface  AccountMapper {
                 .password(user.getPasswordHash())
                 .username(user.getUsername())
                 .authorities(authorities)
+                .gradeName(user.getUserGrade().getName())
+                .discountRate(user.getUserGrade().getDiscountRate())
                 .build();
     }
 }
