@@ -52,6 +52,13 @@ public enum ServiceExceptionCode {
     CART_ITEM_NOT_FOUND("장바구니에서 상품을 찾을 수 없습니다."),
 
     CANNOT_FOUND_DELIVERY_ADDRESS("해당하는 주소를 찾을 수 없습니다."),
+    DELIVERY_ADDRESS_INFO_REQUIRED("배송지 입력은 필수입니다."),
+
+    NOT_GUEST_ORDER("비회원 주문이 아닙니다"),
+    GUEST_ORDER_NOT_MATCH("주문자 정보가 일치하지 않습니다"),
+    INVALID_GUEST_PASSWORD("비밀번호가 일치하지 않습니다"),
+
+
     // ... 다른 예외 코드들
     ;
 

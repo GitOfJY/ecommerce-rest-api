@@ -38,4 +38,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     boolean existsByOrderProductsProductIdAndStatus(Long productId, OrderStatus status);
 
+    @Query("SELECT o FROM Order o JOIN FETCH o.guest g WHERE o.orderNumber = :orderNumber AND o.guest IS NOT NULL")
+    Optional<Order> findGuestOrderByOrderNumber(@Param("orderNumber") String orderNumber);
 }
