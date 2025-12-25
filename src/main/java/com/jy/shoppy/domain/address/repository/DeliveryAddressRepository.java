@@ -12,9 +12,15 @@ import java.util.Optional;
 
 @RequestMapping
 public interface DeliveryAddressRepository extends JpaRepository<DeliveryAddress, Long> {
-    List<DeliveryAddress> findByUserIdOrderByIsDefaultDesc(Long userId);
+    @Query("SELECT d FROM DeliveryAddress d WHERE d.user.id = :userId AND d.isTemporary = false ORDER BY d.isDefault DESC, d.createdAt DESC")
+    List<DeliveryAddress> findByUserIdOrderByIsDefaultDesc(@Param("userId") Long userId);
+
+    // 또는 메서드 네이밍으로
+    List<DeliveryAddress> findByUserIdAndIsTemporaryFalseOrderByIsDefaultDesc(Long userId);
 
     Optional<DeliveryAddress> findByUserIdAndIsDefaultTrue(Long userId);
+
+    Optional<DeliveryAddress> findByIdAndUserId(Long id, Long userId);
 
     boolean existsByUserId(Long userId);
 

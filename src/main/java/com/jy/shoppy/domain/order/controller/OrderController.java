@@ -1,11 +1,9 @@
 package com.jy.shoppy.domain.order.controller;
 
 import com.jy.shoppy.domain.auth.dto.Account;
+import com.jy.shoppy.domain.order.dto.*;
 import com.jy.shoppy.domain.order.service.OrderService;
-import com.jy.shoppy.domain.order.dto.CreateOrderRequest;
-import com.jy.shoppy.domain.order.dto.OrderResponse;
 import com.jy.shoppy.global.response.ApiResponse;
-import com.jy.shoppy.domain.order.dto.SearchOrderCond;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -33,7 +31,7 @@ public class OrderController {
     @PostMapping
     public ResponseEntity<ApiResponse<OrderResponse>> create(
             @AuthenticationPrincipal Account account,
-            @RequestBody @Valid CreateOrderRequest req) {
+            @RequestBody @Valid CreateMemberOrderRequest req) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(orderService.create(account, req), HttpStatus.CREATED));
     }
@@ -44,7 +42,7 @@ public class OrderController {
     )
     @PostMapping("/guest")
     public ResponseEntity<ApiResponse<OrderResponse>> createGuestOrder(
-            @RequestBody CreateOrderRequest req) {
+            @RequestBody @Valid CreateGuestOrderRequest req) {
         return ResponseEntity.ok(
                 ApiResponse.success(orderService.createGuestOrder(req)));
     }
@@ -59,6 +57,17 @@ public class OrderController {
             @RequestParam("id") Long orderId
     ) {
         return ResponseEntity.ok(ApiResponse.success(orderService.findMyOrderById(account, orderId), HttpStatus.OK));
+    }
+
+    @Operation(
+            summary = "[비회원] 주문 조회 API",
+            description = "주문번호, 주문자명, 비밀번호로 비회원 주문을 조회합니다."
+    )
+    @PostMapping("/guest/search")
+    public ResponseEntity<ApiResponse<OrderResponse>> findGuestOrder(
+            @Valid @RequestBody GuestOrderRequest req) {
+        return ResponseEntity.ok(
+                ApiResponse.success(orderService.findGuestOrder(req)));
     }
 
     @Operation(
@@ -81,6 +90,17 @@ public class OrderController {
     public ResponseEntity<ApiResponse<OrderResponse>> delete(@AuthenticationPrincipal Account account,
                                                              @PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success(orderService.cancelMyOrder(account, id)));
+    }
+
+    @Operation(
+            summary = "[비회원] 주문 취소 API",
+            description = "주문번호, 주문자명, 비밀번호로 비회원 주문을 취소합니다."
+    )
+    @PostMapping("/guest/cancel")
+    public ResponseEntity<ApiResponse<OrderResponse>> cancelGuestOrder(
+            @Valid @RequestBody GuestOrderCancelRequest req) {
+        return ResponseEntity.ok(
+                ApiResponse.success(orderService.cancelGuestOrder(req)));
     }
 
     @Operation(

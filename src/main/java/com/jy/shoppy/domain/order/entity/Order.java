@@ -1,6 +1,7 @@
 package com.jy.shoppy.domain.order.entity;
 
 import com.jy.shoppy.domain.address.entity.DeliveryAddress;
+import com.jy.shoppy.domain.guest.entity.Guest;
 import com.jy.shoppy.domain.user.entity.User;
 import com.jy.shoppy.domain.order.entity.type.OrderStatus;
 import jakarta.persistence.*;
@@ -29,6 +30,13 @@ public class Order {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "guest_id")
+    private Guest guest;
+
+    @Column(unique = true, nullable = false, length = 50)
+    private String orderNumber;
+
     @Builder.Default
     @BatchSize(size = 20)
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
@@ -40,8 +48,6 @@ public class Order {
 
     @Column(nullable = false)
     private LocalDateTime orderDate;
-
-    private String guestPassword;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "delivery_address_id")
@@ -56,15 +62,27 @@ public class Order {
 
     // 주문 생성
     public static Order createOrder(User user,
+                                    Guest guest,
                                     DeliveryAddress deliveryAddress,
                                     List<OrderProduct> orderProducts,
-                                    String guestPassword) {
+                                    String orderNumber) {
+        if (user == null && guest == null) {
+            throw new IllegalArgumentException("주문자 정보가 필요합니다");
+        }
+        if (user != null && guest != null) {
+            throw new IllegalArgumentException("회원과 비회원을 동시에 지정할 수 없습니다");
+        }
+        if (user != null && deliveryAddress == null) {
+            throw new IllegalArgumentException("회원 주문은 배송지가 필요합니다");
+        }
+
         Order order = Order.builder()
                 .user(user)
+                .guest(guest)
+                .orderNumber(orderNumber)
                 .status(OrderStatus.PENDING)
                 .orderDate(LocalDateTime.now())
                 .deliveryAddress(deliveryAddress)
-                .guestPassword(guestPassword)
                 .build();
 
         for (OrderProduct orderProduct : orderProducts) {
@@ -73,10 +91,6 @@ public class Order {
 
         order.calculateAndSetTotalPrice();
         return order;
-    }
-
-    public boolean isGuestOrder() {
-        return user == null;
     }
 
     public void calculateAndSetTotalPrice() {
@@ -114,5 +128,82 @@ public class Order {
             throw new ServiceException(ServiceExceptionCode.CANNOT_CANCEL_ORDER_CANCELED);
         }
         this.status = OrderStatus.COMPLETED;
+    }
+
+    public String getZipcode() {
+        if (isGuestOrder()) {
+            return guest.getZipcode();
+        }
+        return deliveryAddress != null ? deliveryAddress.getAddress().getZipCode() : null;
+    }
+
+    public String getCity() {
+        if (isGuestOrder()) {
+            return guest.getCity();
+        }
+        return deliveryAddress != null ? deliveryAddress.getAddress().getCity() : null;
+    }
+
+    public String getStreet() {
+        if (isGuestOrder()) {
+            return guest.getStreet();
+        }
+        return deliveryAddress != null ? deliveryAddress.getAddress().getStreet() : null;
+    }
+
+    public String getDetail() {
+        if (isGuestOrder()) {
+            return guest.getDetail();
+        }
+        return deliveryAddress != null ? deliveryAddress.getAddress().getDetail() : null;
+    }
+
+    public String getRecipientName() {
+        if (isGuestOrder()) {
+            return guest.getName();
+        }
+        return deliveryAddress != null ? deliveryAddress.getRecipientName() : null;
+    }
+
+    public String getReceiverPhone() {
+        if (isGuestOrder()) {
+            return guest.getPhone();
+        }
+        return deliveryAddress != null ? deliveryAddress.getRecipientPhone() : null;
+    }
+
+    public String getUserName() {
+        if (isGuestOrder()) {
+            return guest.getName();
+        }
+        return user != null ? user.getUsername() : null;
+    }
+
+    public String getRecipientEmail() {
+        if (isGuestOrder()) {
+            return guest.getEmail();
+        }
+        return deliveryAddress != null ? deliveryAddress.getRecipientEmail() : null;
+    }
+
+    public String getFullAddress() {
+        StringBuilder address = new StringBuilder();
+        if (getZipcode() != null) {
+            address.append("[").append(getZipcode()).append("] ");
+        }
+        if (getCity() != null) {
+            address.append(getCity()).append(" ");
+        }
+        if (getStreet() != null) {
+            address.append(getStreet());
+        }
+        if (getDetail() != null && !getDetail().isBlank()) {
+            address.append(" ").append(getDetail());
+        }
+        return address.toString();
+    }
+
+    public boolean isGuestOrder() {
+        return guest != null;
     }
 }
