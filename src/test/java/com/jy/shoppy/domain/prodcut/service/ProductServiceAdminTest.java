@@ -360,7 +360,6 @@ class ProductServiceAdminTest {
     @Nested
     @DisplayName("상품 삭제 테스트")
     class DeleteProductTest {
-
         @Test
         @DisplayName("상품 삭제 성공")
         void delete_product_success() {

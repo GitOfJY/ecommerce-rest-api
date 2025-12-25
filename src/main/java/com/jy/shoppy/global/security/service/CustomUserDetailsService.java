@@ -22,6 +22,5 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_USER));
         return accountMapper.toAccount(user);
-
     }
 }

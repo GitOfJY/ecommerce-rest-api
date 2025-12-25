@@ -14,9 +14,6 @@ import java.util.List;
 
 @Getter
 @ToString
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Account implements UserDetails {
@@ -68,16 +65,20 @@ public class Account implements UserDetails {
     @Builder
     @JsonCreator
     public Account(
-            @JsonProperty("id") Long accountId,
+            @JsonProperty("accountId") Long accountId,
             @JsonProperty("email") String email,
             @JsonProperty("password") String password,
             @JsonProperty("username") String username,
+            @JsonProperty("gradeName") String gradeName,
+            @JsonProperty("discountRate") BigDecimal discountRate,
             @JsonProperty("authorities") List<GrantedAuthority> authorities
     ) {
         this.accountId = accountId;
         this.email = email;
         this.password = password;
         this.username = username;
+        this.gradeName = gradeName;
+        this.discountRate = discountRate;
         this.authorities = authorities;
     }
 }

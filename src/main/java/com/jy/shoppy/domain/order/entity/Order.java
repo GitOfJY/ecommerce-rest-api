@@ -41,8 +41,6 @@ public class Order {
     @Column(nullable = false)
     private LocalDateTime orderDate;
 
-    private String guestPassword;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "delivery_address_id")
     private DeliveryAddress deliveryAddress;
