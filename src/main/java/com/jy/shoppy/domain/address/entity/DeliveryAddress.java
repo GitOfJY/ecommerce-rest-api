@@ -1,8 +1,10 @@
 package com.jy.shoppy.domain.address.entity;
 
 import com.jy.shoppy.domain.address.dto.DeliveryAddressRequest;
-import com.jy.shoppy.domain.order.dto.CreateOrderRequest;
+import com.jy.shoppy.domain.order.dto.CreateMemberOrderRequest;
 import com.jy.shoppy.domain.user.entity.User;
+import com.jy.shoppy.global.exception.ServiceException;
+import com.jy.shoppy.global.exception.ServiceExceptionCode;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -46,19 +48,25 @@ public class DeliveryAddress {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    private boolean isTemporary;
+
     public void updateIsDefault(boolean isDefault) {
         this.isDefault = isDefault;
     }
 
-    // 회원 주문용
-    public static DeliveryAddress createDeliveryAddress(User user, CreateOrderRequest req) {
+    // 회원 주문용 (일회용)
+    public static DeliveryAddress createDeliveryAddress(User user, CreateMemberOrderRequest req) {
+        if (req.getRecipientName() == null || req.getStreet() == null ||
+                req.getZipCode() == null || req.getCity() == null) {
+            throw new ServiceException(ServiceExceptionCode.DELIVERY_ADDRESS_INFO_REQUIRED);
+        }
+
         Address address = Address.builder()
                 .zipCode(req.getZipCode())
                 .city(req.getCity())
                 .street(req.getStreet())
                 .detail(req.getDetail())
                 .build();
-
         return DeliveryAddress.builder()
                 .user(user)
                 .address(address)
@@ -67,30 +75,11 @@ public class DeliveryAddress {
                 .recipientEmail(req.getRecipientEmail())
                 .alias(null)
                 .isDefault(false)
+                .isTemporary(true)
                 .build();
     }
 
-    // 비회원 주문용
-    public static DeliveryAddress createGuestDeliveryAddress(CreateOrderRequest req) {
-        Address address = Address.builder()
-                .zipCode(req.getZipCode())
-                .city(req.getCity())
-                .street(req.getStreet())
-                .detail(req.getDetail())
-                .build();
-
-        return DeliveryAddress.builder()
-                .user(null)
-                .address(address)
-                .recipientName(req.getRecipientName())
-                .recipientPhone(req.getRecipientPhone())
-                .recipientEmail(req.getRecipientEmail())
-                .alias(null)
-                .isDefault(false)
-                .build();
-    }
-
-    // 배송지 관리용 (회원 전용)
+    // 배송지 관리용 (회원 전용, 저장됨)
     public static DeliveryAddress createDeliveryAddress(User user, DeliveryAddressRequest req, boolean isDefault) {
         Address address = Address.builder()
                 .zipCode(req.getZipCode())
@@ -107,6 +96,7 @@ public class DeliveryAddress {
                 .recipientEmail(req.getRecipientEmail())
                 .alias(req.getAlias())
                 .isDefault(isDefault)
+                .isTemporary(false)
                 .build();
     }
 }
