@@ -42,6 +42,7 @@ public enum ServiceExceptionCode {
     CANNOT_FOUND_ORDER("주문을 찾을 수 없습니다."),
     CANNOT_DELETE_ORDER_COMPLETED("완료된 주문이 있어 삭제할 수 없습니다."),
     CANNOT_DELETE_ORDER_NOT_PENDING("PENDING 상태의 주문만 취소할 수 있습니다."),
+    ALREADY_COMPLETED_ORDER("이미 완료된 주문입니다."),
 
     CANNOT_REQUEST_REFUND_NOT_COMPLETED("COMPLETED 상태의 주문만 환불 요청이 가능합니다."),
     CANNOT_FOUND_REFUND("해당하는 환불건을 찾을 수 없습니다."),

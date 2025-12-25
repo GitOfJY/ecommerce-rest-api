@@ -18,6 +18,7 @@ import com.jy.shoppy.domain.order.repository.OrderRepository;
 import com.jy.shoppy.domain.prodcut.repository.ProductRepository;
 import com.jy.shoppy.domain.user.repository.UserRepository;
 import com.jy.shoppy.domain.prodcut.dto.OrderProductRequest;
+import com.jy.shoppy.domain.user.service.UserGradeService;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

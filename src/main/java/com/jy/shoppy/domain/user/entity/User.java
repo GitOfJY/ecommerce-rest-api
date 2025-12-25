@@ -108,4 +108,21 @@ public class User {
     public boolean isActive() {
         return this.status == UserStatus.ACTIVE;
     }
+
+    /**
+     * 구매 금액 업데이트
+     */
+    public void updatePurchaseAmount(BigDecimal purchaseAmount) {
+        if (purchaseAmount == null || purchaseAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+        this.totalPurchaseAmount = this.totalPurchaseAmount.add(purchaseAmount);
+    }
+
+    /**
+     * 등급 업그레이드
+     */
+    public void upgradeGrade(UserGrade newGrade) {
+        this.userGrade = newGrade;
+    }
 }
