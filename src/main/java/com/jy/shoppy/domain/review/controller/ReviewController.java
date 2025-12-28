@@ -36,19 +36,19 @@ public class ReviewController {
                 .body(ApiResponse.success(reviewService.create(req, account), HttpStatus.CREATED));
     }
 
-    /*
     @Operation(
             summary = "리뷰 수정 API",
             description = "리뷰를 수정합니다."
     )
     @PutMapping("/{reviewId}")
-    public ResponseEntity<ApiResponse<ProductResponse>> update(
+    public ResponseEntity<ApiResponse<ReviewResponse>> update(
             @PathVariable Long reviewId,
             @RequestBody @Valid UpdateReviewRequest req,
             @AuthenticationPrincipal Account account) {
         return ResponseEntity.ok(ApiResponse.success(reviewService.update(reviewId, req, account), HttpStatus.OK));
     }
 
+    /*
     @Operation(
             summary = "리뷰 삭제 API",
             description = "리뷰를 삭제합니다."

@@ -5,12 +5,10 @@ import com.jy.shoppy.domain.order.entity.OrderProduct;
 import com.jy.shoppy.domain.order.entity.type.OrderStatus;
 import com.jy.shoppy.domain.order.repository.OrderProductRepository;
 import com.jy.shoppy.domain.order.repository.OrderRepository;
+import com.jy.shoppy.domain.prodcut.dto.ProductResponse;
 import com.jy.shoppy.domain.prodcut.entity.Product;
 import com.jy.shoppy.domain.prodcut.repository.ProductRepository;
-import com.jy.shoppy.domain.review.dto.CreateReviewRequest;
-import com.jy.shoppy.domain.review.dto.CreateReviewResponse;
-import com.jy.shoppy.domain.review.dto.ReviewResponse;
-import com.jy.shoppy.domain.review.dto.ReviewableProductResponse;
+import com.jy.shoppy.domain.review.dto.*;
 import com.jy.shoppy.domain.review.entity.Review;
 import com.jy.shoppy.domain.review.entity.ReviewImage;
 import com.jy.shoppy.domain.review.mapper.ReviewMapper;
@@ -87,7 +85,41 @@ public class ReviewService {
         return reviewMapper.toCreateResponse(review);
     }
 
-    // TODO 리뷰 수정
+    @Transactional
+    public ReviewResponse update(Long reviewId, UpdateReviewRequest req, Account account) {
+        // 1. 리뷰 조회
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_REVIEW));
+
+        // 2. 권한 검증 (본인 확인)
+        if (!review.getUser().getId().equals(account.getAccountId())) {
+            throw new ServiceException(ServiceExceptionCode.UNAUTHORIZED_ACCESS);
+        }
+
+        // 3. 평점이 변경되었는지 확인 (평점 업데이트 필요 여부)
+        boolean ratingChanged = !review.getRating().equals(req.getRating());
+
+        // 4. 리뷰 내용 수정
+        review.update(req);
+
+        // 5. 이미지 수정 (기존 이미지 삭제 후 새로 추가)
+        if (req.getImageUrls() != null) {
+            review.clearImages();
+            for (int i = 0; i < req.getImageUrls().size(); i++) {
+                ReviewImage image = ReviewImage.create(review, req.getImageUrls().get(i), i);
+                review.addImage(image);
+            }
+        }
+
+        reviewRepository.save(review);
+
+        // 6. 평점이 변경되었으면 상품 평점 업데이트
+        if (ratingChanged) {
+            updateProductRating(review.getProduct().getId());
+        }
+
+        return reviewMapper.toResponse(review);
+    }
 
     // TODO 리뷰 삭제
 
