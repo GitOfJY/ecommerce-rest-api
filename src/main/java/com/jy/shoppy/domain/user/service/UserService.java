@@ -113,7 +113,7 @@ public class UserService {
     public String sendTemporaryPassword(LoginPasswordRequest request) {
         User user = userRepository.findByEmailOrPhoneWithName(
                 request.getEmail(),
-                request.getPhone(),
+                request.getPhone().replaceAll("-", ""),
                 request.getUsername()
         ).orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_USER));
 

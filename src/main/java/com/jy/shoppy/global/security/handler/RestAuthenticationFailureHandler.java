@@ -1,6 +1,8 @@
 package com.jy.shoppy.global.security.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jy.shoppy.global.exception.ServiceExceptionCode;
+import com.jy.shoppy.global.response.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
@@ -12,7 +14,6 @@ import org.springframework.security.web.authentication.AuthenticationFailureHand
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.Map;
 
 @Component("restFailureHandler")
 public class RestAuthenticationFailureHandler implements AuthenticationFailureHandler {
@@ -20,20 +21,26 @@ public class RestAuthenticationFailureHandler implements AuthenticationFailureHa
 
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException {
-        String errorMessage = "Authentication failed";
+        ServiceExceptionCode errorCode;
 
         if (exception instanceof BadCredentialsException) {
-            errorMessage = "Invalid email or password";
+            errorCode = ServiceExceptionCode.INVALID_CREDENTIALS;
         } else if (exception instanceof UsernameNotFoundException) {
-            errorMessage = "User not found";
+            errorCode = ServiceExceptionCode.USER_NOT_FOUND;
+        } else {
+            errorCode = ServiceExceptionCode.AUTHENTICATION_FAILED;
         }
 
-        Map<String, Object> error = Map.of(
-                "status", HttpStatus.UNAUTHORIZED.value(),
-                "error", "Unauthorized",
-                "message", errorMessage
-        );
+        response.setStatus(HttpStatus.UNAUTHORIZED.value());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setCharacterEncoding("UTF-8");
 
-        objectMapper.writeValue(response.getWriter(), error);
+        ApiResponse<Object> apiResponse = ApiResponse.builder()
+                .status(HttpStatus.UNAUTHORIZED.value())
+                .result(false)
+                .error(ApiResponse.Error.of(errorCode.name(), errorCode.getMessage()))
+                .build();
+
+        objectMapper.writeValue(response.getWriter(), apiResponse);
     }
 }

@@ -3,6 +3,7 @@ package com.jy.shoppy.domain.auth.dto;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.jy.shoppy.domain.user.entity.type.UserStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.springframework.security.core.GrantedAuthority;
@@ -26,6 +27,8 @@ public class Account implements UserDetails {
     BigDecimal discountRate;
 
     List<GrantedAuthority> authorities;
+
+    UserStatus status;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -71,6 +74,7 @@ public class Account implements UserDetails {
             @JsonProperty("username") String username,
             @JsonProperty("gradeName") String gradeName,
             @JsonProperty("discountRate") BigDecimal discountRate,
+            @JsonProperty("status") UserStatus status,
             @JsonProperty("authorities") List<GrantedAuthority> authorities
     ) {
         this.accountId = accountId;
@@ -79,6 +83,7 @@ public class Account implements UserDetails {
         this.username = username;
         this.gradeName = gradeName;
         this.discountRate = discountRate;
+        this.status = status;
         this.authorities = authorities;
     }
 }

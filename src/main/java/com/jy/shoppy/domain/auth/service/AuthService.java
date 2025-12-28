@@ -7,6 +7,8 @@ import com.jy.shoppy.domain.auth.dto.LoginResponse;
 import com.jy.shoppy.domain.auth.dto.RegisterUserRequest;
 import com.jy.shoppy.domain.auth.dto.RegisterUserResponse;
 import com.jy.shoppy.domain.user.entity.User;
+import com.jy.shoppy.domain.user.entity.UserGrade;
+import com.jy.shoppy.domain.user.repository.UserGradeRepository;
 import com.jy.shoppy.domain.user.repository.UserRepository;
 import com.jy.shoppy.global.exception.ServiceException;
 import com.jy.shoppy.global.exception.ServiceExceptionCode;
@@ -28,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class AuthService {
     private final UserRepository userRepository;
+    private final UserGradeRepository userGradeRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthMapper authMapper;
     private final AccountMapper accountMapper;
@@ -38,9 +41,13 @@ public class AuthService {
         // 중복 이메일 확인
         validateDuplicateEmail(req.getEmail());
 
+        // 등급 조회
+        UserGrade bronzeGrade = userGradeRepository.findByName("BRONZE")
+                .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_USER_GRADE));
+
         // 패스워드 인코딩
         String encodedPassword = passwordEncoder.encode(req.getPassword());
-        User newUser = User.registerUser(req, encodedPassword);
+        User newUser = User.registerUser(req, encodedPassword, bronzeGrade);
         userRepository.save(newUser);
 
         // 자동 로그인
@@ -59,6 +66,7 @@ public class AuthService {
     // 자동 로그인
     private void autoLogin(User user) {
         Account account = accountMapper.toAccount(user);
+        log.info("Auto login for user {}", account);
 
         UsernamePasswordAuthenticationToken authToken =
                 new UsernamePasswordAuthenticationToken(

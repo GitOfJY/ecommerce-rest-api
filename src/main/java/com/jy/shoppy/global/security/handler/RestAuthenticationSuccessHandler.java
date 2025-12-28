@@ -3,10 +3,8 @@ package com.jy.shoppy.global.security.handler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jy.shoppy.domain.auth.dto.Account;
 import com.jy.shoppy.domain.auth.dto.LoginResponse;
-import com.jy.shoppy.domain.user.entity.User;
 import com.jy.shoppy.domain.user.repository.UserRepository;
-import com.jy.shoppy.global.exception.ServiceException;
-import com.jy.shoppy.global.exception.ServiceExceptionCode;
+import com.jy.shoppy.global.response.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -47,13 +45,19 @@ public class RestAuthenticationSuccessHandler implements AuthenticationSuccessHa
                 .gradeName(account.getGradeName())
                 .discountRate(account.getDiscountRate())
                 .role(role)
+                .status(account.getStatus())
                 .build();
+
+        ApiResponse<LoginResponse> apiResponse = ApiResponse.success(
+                loginResponse,
+                HttpStatus.OK
+        );
 
         // 3. JSON 응답
         response.setStatus(HttpStatus.OK.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
-        objectMapper.writeValue(response.getWriter(), loginResponse);
+        objectMapper.writeValue(response.getWriter(), apiResponse);
 
         // 4. 세션 정리
         clearAuthenticationAttributes(request);

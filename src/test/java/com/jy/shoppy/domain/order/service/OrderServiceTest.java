@@ -13,6 +13,8 @@ import com.jy.shoppy.domain.prodcut.entity.ProductOption;
 import com.jy.shoppy.domain.prodcut.repository.ProductOptionRepository;
 import com.jy.shoppy.domain.prodcut.repository.ProductRepository;
 import com.jy.shoppy.domain.user.entity.User;
+import com.jy.shoppy.domain.user.entity.UserGrade;
+import com.jy.shoppy.domain.user.repository.UserGradeRepository;
 import com.jy.shoppy.domain.user.repository.UserRepository;
 import com.jy.shoppy.global.exception.ServiceException;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,6 +49,9 @@ class OrderServiceTest {
 
     @Autowired
     private ProductOptionRepository productOptionRepository;
+
+    @Autowired
+    private UserGradeRepository userGradeRepository;
 
     @Autowired
     private OrderRepository orderRepository;
@@ -440,5 +445,276 @@ class OrderServiceTest {
                 .build();
 
         return orderService.createGuestOrder(request);
+    }
+
+    @Nested
+    @DisplayName("회원 등급별 할인 테스트")
+    class MemberGradeDiscountTest {
+        @Test
+        @DisplayName("BRONZE 등급 - 할인 없음 (0%)")
+        void create_order_bronze_no_discount() {
+            // given
+            Account account = createAccount(testUser);
+
+            // testUser는 BRONZE 등급 (할인율 0%)
+            User user = userRepository.findByIdWithGrade(testUser.getId()).orElseThrow();
+            assertThat(user.getUserGrade().getName()).isEqualTo("BRONZE");
+            assertThat(user.getUserGrade().getDiscountRate()).isEqualByComparingTo(BigDecimal.ZERO);
+
+            OrderProductRequest productRequest = OrderProductRequest.builder()
+                    .productId(testProductWithOption.getId())
+                    .color("빨강")
+                    .size("S")
+                    .quantity(1)
+                    .build();
+
+            CreateMemberOrderRequest request = CreateMemberOrderRequest.builder()
+                    .products(List.of(productRequest))
+                    .recipientName("홍길동")
+                    .recipientEmail("hong@example.com")
+                    .recipientPhone("010-1234-5678")
+                    .zipCode("06234")
+                    .city("서울시")
+                    .street("강남구 테헤란로 123")
+                    .build();
+
+            // when
+            OrderResponse response = orderService.create(account, request);
+
+            // then
+            BigDecimal expectedPrice = redSmallOption.getTotalPrice(); // 할인 없음
+            assertThat(response.getTotalPrice()).isEqualByComparingTo(expectedPrice);
+            assertThat(response.getOriginalPrice()).isEqualByComparingTo(expectedPrice);
+            assertThat(response.getDiscountAmount()).isEqualByComparingTo(BigDecimal.ZERO);
+            assertThat(response.getDiscountRate()).isEqualByComparingTo(BigDecimal.ZERO);
+            assertThat(response.getUserGrade()).isEqualTo("BRONZE");
+        }
+
+        @Test
+        @DisplayName("SILVER 등급 - 1% 할인")
+        void create_order_silver_1percent_discount() {
+            // given
+            // testUser를 SILVER 등급으로 변경
+            User user = userRepository.findByIdWithGrade(testUser.getId()).orElseThrow();
+            UserGrade silverGrade = userGradeRepository.findByName("SILVER").orElseThrow();
+            user.upgradeGrade(silverGrade);
+            userRepository.save(user);
+
+            Account account = createAccount(user);
+
+            OrderProductRequest productRequest = OrderProductRequest.builder()
+                    .productId(testProductWithOption.getId())
+                    .color("빨강")
+                    .size("S")
+                    .quantity(1)
+                    .build();
+
+            CreateMemberOrderRequest request = CreateMemberOrderRequest.builder()
+                    .products(List.of(productRequest))
+                    .recipientName("홍길동")
+                    .recipientEmail("hong@example.com")
+                    .recipientPhone("010-1234-5678")
+                    .zipCode("06234")
+                    .city("서울시")
+                    .street("강남구 테헤란로 123")
+                    .build();
+
+            // when
+            OrderResponse response = orderService.create(account, request);
+
+            // then
+            BigDecimal originalPrice = redSmallOption.getTotalPrice(); // 40000 (39000 + 1000)
+            BigDecimal discountRate = new BigDecimal("0.01"); // 1%
+            BigDecimal discountAmount = originalPrice.multiply(discountRate)
+                    .setScale(0, BigDecimal.ROUND_HALF_UP); // 400
+            BigDecimal expectedPrice = originalPrice.subtract(discountAmount); // 39600
+
+            assertThat(response.getTotalPrice()).isEqualByComparingTo(expectedPrice);
+            assertThat(response.getDiscountAmount()).isEqualByComparingTo(discountAmount);
+            assertThat(response.getDiscountRate()).isEqualByComparingTo(discountRate);
+            assertThat(response.getUserGrade()).isEqualTo("SILVER");
+        }
+
+        @Test
+        @DisplayName("GOLD 등급 - 3% 할인")
+        void create_order_gold_3percent_discount() {
+            // given
+            User user = userRepository.findByIdWithGrade(testUser.getId()).orElseThrow();
+            UserGrade goldGrade = userGradeRepository.findByName("GOLD").orElseThrow();
+            user.upgradeGrade(goldGrade);
+            userRepository.save(user);
+
+            Account account = createAccount(user);
+
+            OrderProductRequest productRequest = OrderProductRequest.builder()
+                    .productId(testProductWithOption.getId())
+                    .color("빨강")
+                    .size("S")
+                    .quantity(1)
+                    .build();
+
+            CreateMemberOrderRequest request = CreateMemberOrderRequest.builder()
+                    .products(List.of(productRequest))
+                    .recipientName("홍길동")
+                    .recipientEmail("hong@example.com")
+                    .recipientPhone("010-1234-5678")
+                    .zipCode("06234")
+                    .city("서울시")
+                    .street("강남구 테헤란로 123")
+                    .build();
+
+            // when
+            OrderResponse response = orderService.create(account, request);
+
+            // then
+            BigDecimal originalPrice = redSmallOption.getTotalPrice(); // 40000
+            BigDecimal discountRate = new BigDecimal("0.03"); // 3%
+            BigDecimal discountAmount = originalPrice.multiply(discountRate)
+                    .setScale(0, BigDecimal.ROUND_HALF_UP); // 1200
+            BigDecimal expectedPrice = originalPrice.subtract(discountAmount); // 38800
+
+            assertThat(response.getTotalPrice()).isEqualByComparingTo(expectedPrice);
+            assertThat(response.getDiscountAmount()).isEqualByComparingTo(discountAmount);
+            assertThat(response.getDiscountRate()).isEqualByComparingTo(discountRate);
+            assertThat(response.getUserGrade()).isEqualTo("GOLD");
+        }
+
+        @Test
+        @DisplayName("VIP 등급 - 5% 할인")
+        void create_order_vip_5percent_discount() {
+            // given
+            User user = userRepository.findByIdWithGrade(testUser.getId()).orElseThrow();
+            UserGrade vipGrade = userGradeRepository.findByName("VIP").orElseThrow();
+            user.upgradeGrade(vipGrade);
+            userRepository.save(user);
+
+            Account account = createAccount(user);
+
+            OrderProductRequest productRequest = OrderProductRequest.builder()
+                    .productId(testProductWithOption.getId())
+                    .color("빨강")
+                    .size("S")
+                    .quantity(1)
+                    .build();
+
+            CreateMemberOrderRequest request = CreateMemberOrderRequest.builder()
+                    .products(List.of(productRequest))
+                    .recipientName("홍길동")
+                    .recipientEmail("hong@example.com")
+                    .recipientPhone("010-1234-5678")
+                    .zipCode("06234")
+                    .city("서울시")
+                    .street("강남구 테헤란로 123")
+                    .build();
+
+            // when
+            OrderResponse response = orderService.create(account, request);
+
+            // then
+            BigDecimal originalPrice = redSmallOption.getTotalPrice(); // 40000
+            BigDecimal discountRate = new BigDecimal("0.05"); // 5%
+            BigDecimal discountAmount = originalPrice.multiply(discountRate)
+                    .setScale(0, BigDecimal.ROUND_HALF_UP); // 2000
+            BigDecimal expectedPrice = originalPrice.subtract(discountAmount); // 38000
+
+            assertThat(response.getTotalPrice()).isEqualByComparingTo(expectedPrice);
+            assertThat(response.getDiscountAmount()).isEqualByComparingTo(discountAmount);
+            assertThat(response.getDiscountRate()).isEqualByComparingTo(discountRate);
+            assertThat(response.getUserGrade()).isEqualTo("VIP");
+        }
+
+        @Test
+        @DisplayName("여러 상품 주문 시 할인 적용")
+        void create_order_multiple_products_with_discount() {
+            // given
+            User user = userRepository.findByIdWithGrade(testUser.getId()).orElseThrow();
+            UserGrade goldGrade = userGradeRepository.findByName("GOLD").orElseThrow();
+            user.upgradeGrade(goldGrade);
+            userRepository.save(user);
+
+            Account account = createAccount(user);
+
+            List<OrderProductRequest> productRequests = List.of(
+                    OrderProductRequest.builder()
+                            .productId(testProductWithOption.getId())
+                            .color("빨강")
+                            .size("S")
+                            .quantity(2) // 40000 × 2 = 80000
+                            .build(),
+                    OrderProductRequest.builder()
+                            .productId(testProductWithOption.getId())
+                            .color("빨강")
+                            .size("M")
+                            .quantity(1) // 40000 × 1 = 40000
+                            .build()
+            );
+
+            CreateMemberOrderRequest request = CreateMemberOrderRequest.builder()
+                    .products(productRequests)
+                    .recipientName("홍길동")
+                    .recipientEmail("hong@example.com")
+                    .recipientPhone("010-1234-5678")
+                    .zipCode("06234")
+                    .city("서울시")
+                    .street("강남구 테헤란로 123")
+                    .build();
+
+            // when
+            OrderResponse response = orderService.create(account, request);
+
+            // then
+            // 첫 번째 상품: 40000 × 2 = 80000, 할인 3% = 2400, 최종 77600
+            // 두 번째 상품: 40000 × 1 = 40000, 할인 3% = 1200, 최종 38800
+            // 총합: 116400
+
+            BigDecimal item1Original = redSmallOption.getTotalPrice().multiply(BigDecimal.valueOf(2));
+            BigDecimal item2Original = redMediumOption.getTotalPrice();
+            BigDecimal totalOriginal = item1Original.add(item2Original); // 120000
+
+            BigDecimal discountRate = new BigDecimal("0.03");
+            BigDecimal item1Discount = item1Original.multiply(discountRate).setScale(0, BigDecimal.ROUND_HALF_UP);
+            BigDecimal item2Discount = item2Original.multiply(discountRate).setScale(0, BigDecimal.ROUND_HALF_UP);
+            BigDecimal totalDiscount = item1Discount.add(item2Discount); // 3600
+
+            BigDecimal expectedTotal = totalOriginal.subtract(totalDiscount); // 116400
+
+            assertThat(response.getTotalPrice()).isEqualByComparingTo(expectedTotal);
+            assertThat(response.getDiscountAmount()).isEqualByComparingTo(totalDiscount);
+            assertThat(response.getUserGrade()).isEqualTo("GOLD");
+        }
+
+        @Test
+        @DisplayName("비회원 주문 - 할인 없음")
+        void create_guest_order_no_discount() {
+            // given
+            OrderProductRequest productRequest = OrderProductRequest.builder()
+                    .productId(testProductWithOption.getId())
+                    .color("빨강")
+                    .size("S")
+                    .quantity(1)
+                    .build();
+
+            CreateGuestOrderRequest request = CreateGuestOrderRequest.builder()
+                    .products(List.of(productRequest))
+                    .guestPassword("guest1234")
+                    .name("김손님")
+                    .email("guest@example.com")
+                    .phone("010-9999-8888")
+                    .zipCode("06234")
+                    .city("서울시")
+                    .street("강남구 테헤란로 456")
+                    .build();
+
+            // when
+            OrderResponse response = orderService.createGuestOrder(request);
+
+            // then
+            BigDecimal expectedPrice = redSmallOption.getTotalPrice();
+            assertThat(response.getTotalPrice()).isEqualByComparingTo(expectedPrice);
+            assertThat(response.getOriginalPrice()).isEqualByComparingTo(expectedPrice);
+            assertThat(response.getDiscountAmount()).isEqualByComparingTo(BigDecimal.ZERO);
+            assertThat(response.getDiscountRate()).isEqualByComparingTo(BigDecimal.ZERO);
+            assertThat(response.getUserGrade()).isNull(); // 비회원은 등급 없음
+        }
     }
 }

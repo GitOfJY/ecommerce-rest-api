@@ -8,17 +8,32 @@ import org.mapstruct.Mapping;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface  AccountMapper {
+    @Mapping(source = "id", target = "id")
+    @Mapping(source = "email", target = "email")
+    @Mapping(source = "username", target = "username")
     @Mapping(source = "userGrade.name", target = "gradeName")
+    @Mapping(source = "userGrade.discountRate", target = "discountRate")
+    @Mapping(source = "status", target = "status")
     RegisterUserResponse toRegisterResponse(User user);
 
     default Account toAccount(User user) {
+        // 기본값
         String roleName = user.getRole() != null && user.getRole().getName() != null
                 ? user.getRole().getName()
-                : "ROLE_USER";  // 기본값
+                : "ROLE_USER";
+
+        String gradeName = user.getUserGrade().getName() != null
+                ? user.getUserGrade().getName()
+                : "BRONZE";
+
+        BigDecimal discountRate = user.getUserGrade().getName() != null
+                ? user.getUserGrade().getDiscountRate()
+                : BigDecimal.valueOf(0.00);
 
         List<GrantedAuthority> authorities = List.of(
                 new SimpleGrantedAuthority(roleName)
@@ -30,8 +45,9 @@ public interface  AccountMapper {
                 .password(user.getPasswordHash())
                 .username(user.getUsername())
                 .authorities(authorities)
-                .gradeName(user.getUserGrade().getName())
-                .discountRate(user.getUserGrade().getDiscountRate())
+                .gradeName(gradeName)
+                .discountRate(discountRate)
+                .status(user.getStatus())
                 .build();
     }
 }

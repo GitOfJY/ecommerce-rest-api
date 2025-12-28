@@ -12,5 +12,6 @@ public interface AuthMapper {
     @Mapping(source = "role.name", target = "role")
     @Mapping(source = "userGrade.name", target = "gradeName")
     @Mapping(source = "userGrade.discountRate", target = "discountRate")
+    @Mapping(target = "status", source = "status")
     LoginResponse toLoginResponse(User user);
 }

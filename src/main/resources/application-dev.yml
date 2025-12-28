@@ -16,3 +16,9 @@ logging:
     com.p6spy: debug
     org.hibernate.SQL: info
     org.hibernate.type.descriptor.sql.BasicBinder: warn
+
+file:
+  upload:
+    type: local
+    path: uploads
+    base-url: http://localhost:8080

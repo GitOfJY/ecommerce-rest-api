@@ -1,5 +1,6 @@
 package com.jy.shoppy.domain.auth.dto;
 
+import com.jy.shoppy.domain.user.entity.type.UserStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -17,4 +18,5 @@ public class LoginResponse {
     String role;
     String gradeName;
     BigDecimal discountRate;
+    UserStatus status;
 }

@@ -43,7 +43,7 @@ public class AuthController {
             description = "사용자가 로그인합니다." +
                     "(Spring Security가 처리, 이 엔드포인트는 직접 호출되지 않음)")
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody LoginRequest request) {
         return null;
     }
 
