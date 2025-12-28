@@ -76,16 +76,20 @@ public class ReviewService {
             }
         }
 
-         reviewRepository.save(review);
+        reviewRepository.save(review);
 
-         // 8. 상품 평균 평점 업데이트
-         updateProductRating(orderProduct.getProduct().getId());
+        // 8. 상품 평균 평점 업데이트
+        updateProductRating(orderProduct.getProduct().getId());
 
-         log.info("Review created: reviewId={}, userId={}, productId={}",
-                 review.getId(), user.getId(), orderProduct.getProduct().getId());
+        log.info("Review created: reviewId={}, userId={}, productId={}",
+                review.getId(), user.getId(), orderProduct.getProduct().getId());
 
-         return reviewMapper.toCreateResponse(review);
-     }
+        return reviewMapper.toCreateResponse(review);
+    }
+
+    // TODO 리뷰 수정
+
+    // TODO 리뷰 삭제
 
     /**
      * 상품 평균 평점 업데이트
@@ -113,9 +117,6 @@ public class ReviewService {
         log.info("Product rating updated: productId={}, averageRating={}, reviewCount={}",
                 productId, averageRating, reviewCount);
     }
-
-    // TODO 리뷰 수정
-    // TODO 리뷰 삭제
 
     /**
      * 작성 가능한 리뷰 목록 조회

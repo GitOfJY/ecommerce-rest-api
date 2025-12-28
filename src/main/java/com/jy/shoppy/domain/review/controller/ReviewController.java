@@ -24,18 +24,6 @@ import org.springframework.web.bind.annotation.*;
 public class ReviewController {
     private final ReviewService reviewService;
 
-    /*
-    @Operation(
-            summary = "작성 가능한 리뷰 목록 API",
-            description = "작성 가능한 리뷰 목록을 조회합니다."
-    )
-    @PostMapping
-    public ResponseEntity<ApiResponse<ReviewResponse>> getAll(
-            @AuthenticationPrincipal Account account) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(reviewService.getAll(account), HttpStatus.CREATED));
-    }
-
     @Operation(
             summary = "리뷰 등록 API",
             description = "새로운 리뷰를 등록합니다."
@@ -48,6 +36,7 @@ public class ReviewController {
                 .body(ApiResponse.success(reviewService.create(req, account), HttpStatus.CREATED));
     }
 
+    /*
     @Operation(
             summary = "리뷰 수정 API",
             description = "리뷰를 수정합니다."
@@ -69,6 +58,17 @@ public class ReviewController {
             @PathVariable Long reviewId,
             @AuthenticationPrincipal Account account) {
         return ResponseEntity.ok(ApiResponse.success(reviewService.delete(reviewId, account)));
+    }
+
+        @Operation(
+            summary = "작성 가능한 리뷰 목록 API",
+            description = "작성 가능한 리뷰 목록을 조회합니다."
+    )
+    @PostMapping
+    public ResponseEntity<ApiResponse<ReviewResponse>> getAll(
+            @AuthenticationPrincipal Account account) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(reviewService.getAll(account), HttpStatus.CREATED));
     }
     */
 }
