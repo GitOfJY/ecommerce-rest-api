@@ -107,12 +107,14 @@ public class ProductService {
     }
 
     // 다건 조회 (다중 정렬 조건) - DB 쿼리 기반
+    @Transactional(readOnly = true)
     public Page<ProductResponse> getAll(SortProductCond cond, Pageable pageable) {
-        Page<Product> page = productQueryRepository.sortProducts(cond, pageable);
-        return page.map(productMapper::toResponse);
+        Page<Product> products = productQueryRepository.sortProducts(cond, pageable);
+        return products.map(productMapper::toResponse);
     }
 
     // 조건 조회 - DB 쿼리 기반
+    @Transactional(readOnly = true)
     public Page<ProductResponse> searchProductsPage(SearchProductCond cond, Pageable pageable) {
         Page<Product> page = productQueryRepository.searchProductsPage(cond, pageable);
         return page.map(productMapper::toResponse);

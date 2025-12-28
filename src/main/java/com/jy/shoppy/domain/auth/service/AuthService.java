@@ -42,12 +42,18 @@ public class AuthService {
         validateDuplicateEmail(req.getEmail());
 
         // 등급 조회
-        UserGrade bronzeGrade = userGradeRepository.findByName("BRONZE")
-                .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_USER_GRADE));
+        UserGrade grade = null;
+        if (req.getRoleId() == 1) {
+            grade = userGradeRepository.findByName("BRONZE")
+                    .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_USER_GRADE));
+        } else if (req.getRoleId() == 2) {
+            grade = userGradeRepository.findByName("ADMIN")
+                    .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_USER_GRADE));
+        }
 
         // 패스워드 인코딩
         String encodedPassword = passwordEncoder.encode(req.getPassword());
-        User newUser = User.registerUser(req, encodedPassword, bronzeGrade);
+        User newUser = User.registerUser(req, encodedPassword, grade);
         userRepository.save(newUser);
 
         // 자동 로그인

@@ -49,6 +49,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                         .requestMatchers("/api/category/**").permitAll()
+                        // Redis 재적재 (개발용) - 임시 허용
+                        .requestMatchers(HttpMethod.POST, "/api/products/redis/reload").permitAll()
                         // 주문 - 비회원 주문 허용
                         .requestMatchers(HttpMethod.POST, "/api/orders/guest").permitAll()
                         .requestMatchers("/api/orders/**").authenticated()

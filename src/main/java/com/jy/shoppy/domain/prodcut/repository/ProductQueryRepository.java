@@ -1,5 +1,6 @@
 package com.jy.shoppy.domain.prodcut.repository;
 
+import com.jy.shoppy.domain.prodcut.entity.type.SortType;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -14,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
 
@@ -25,7 +25,7 @@ import java.util.List;
 import static com.jy.shoppy.domain.category.entity.QCategoryProduct.categoryProduct;
 import static com.jy.shoppy.domain.prodcut.entity.QProduct.product;
 import static com.jy.shoppy.domain.prodcut.entity.QProductOption.productOption;
-
+import static com.jy.shoppy.domain.prodcut.entity.type.SortType.*;
 
 @Repository
 @RequiredArgsConstructor
@@ -33,7 +33,7 @@ import static com.jy.shoppy.domain.prodcut.entity.QProductOption.productOption;
 public class ProductQueryRepository {
     private final JPAQueryFactory queryFactory;
 
-    public Page<Product> searchProductsPage(SearchProductCond cond, Pageable pageable){
+    public Page<Product> searchProductsPage(SearchProductCond cond, Pageable pageable) {
         List<Product> content = queryFactory
                 .selectFrom(product)
                 .distinct()
@@ -63,6 +63,29 @@ public class ProductQueryRepository {
                         productKeywordContains(cond.productKeyword()),
                         stockStatusEq(cond.stockStatus())
                 );
+
+        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
+    }
+
+    /**
+     * SortType을 사용한 정렬
+     */
+    public Page<Product> sortProducts(SortProductCond cond, Pageable pageable) {
+        OrderSpecifier<?>[] orderSpecifiers = getOrderSpecifiers(cond);
+        log.info("[QueryDSL] Sorting with: {}", (Object[]) orderSpecifiers);
+
+        List<Product> content = queryFactory
+                .selectFrom(product)
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .orderBy(orderSpecifiers)
+                .fetch();
+
+        log.info("[QueryDSL] Fetched {} products", content.size());
+
+        JPAQuery<Long> countQuery = queryFactory
+                .select(product.count())
+                .from(product);
 
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
     }
@@ -110,24 +133,13 @@ public class ProductQueryRepository {
         };
     }
 
-    private BooleanExpression productKeywordContains(String productKeyword){
+    private BooleanExpression productKeywordContains(String productKeyword) {
         return productKeyword != null ? product.name.containsIgnoreCase(productKeyword) : null;
     }
 
-    public Page<Product> sortProducts(SortProductCond cond, Pageable pageable) {
-        List<Product> content = queryFactory
-                .selectFrom(product)
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .orderBy(getOrderSpecifiers(cond))
-                .fetch();
-
-        JPAQuery<Long> countQuery = queryFactory
-                .select(product.count())
-                .from(product);
-        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
-    }
-
+    /**
+     * Pageable의 Sort를 QueryDSL OrderSpecifier로 변환
+     */
     private OrderSpecifier<?>[] getOrders(Pageable pageable) {
         return pageable.getSort().stream()
                 .map(order -> {
@@ -137,6 +149,8 @@ public class ProductQueryRepository {
                         case "price" -> new OrderSpecifier<>(direction, product.price);
                         case "createdAt" -> new OrderSpecifier<>(direction, product.createdAt);
                         case "name" -> new OrderSpecifier<>(direction, product.name);
+                        case "averageRating" -> new OrderSpecifier<>(direction, product.averageRating);
+                        case "reviewCount" -> new OrderSpecifier<>(direction, product.reviewCount);
                         case "totalStock" -> new OrderSpecifier<>(
                                 direction,
                                 JPAExpressions
@@ -147,35 +161,34 @@ public class ProductQueryRepository {
                         default -> null;
                     };
                 })
-                .filter(o -> o != null) // null 제거
-                .toArray(com.querydsl.core.types.OrderSpecifier[]::new);
+                .filter(o -> o != null)
+                .toArray(OrderSpecifier[]::new);
     }
 
     private OrderSpecifier<?>[] getOrderSpecifiers(SortProductCond cond) {
         List<OrderSpecifier<?>> orders = new ArrayList<>();
 
-        // 가격 정렬
-        if (cond.getPriceSort() != null) {
-            orders.add(cond.getPriceSort() == Sort.Direction.ASC
-                    ? product.price.asc()
-                    : product.price.desc());
-        }
-
-        // 등록일 정렬
-        if (cond.getCreatedAtSort() != null) {
-            orders.add(cond.getCreatedAtSort() == Sort.Direction.ASC
-                    ? product.createdAt.asc()
-                    : product.createdAt.desc());
-        }
-        // 보조 정렬: createdAt이 같으면 id로
-        orders.add(cond.getCreatedAtSort() == Sort.Direction.ASC
-                ? product.id.asc()
-                : product.id.desc());
-
-        // 기본 정렬 (아무 조건 없으면)
-        if (orders.isEmpty()) {
+        SortType sortType = cond.getSortType();
+        // 1. 정렬 조건이 있으면 추가
+        if (sortType != null) {
+            OrderSpecifier<?> orderSpecifier = switch (sortType) {
+                case PRICE_ASC -> product.price.asc();
+                case PRICE_DESC -> product.price.desc();
+                case DATE_ASC -> product.createdAt.asc();
+                case DATE_DESC -> product.createdAt.desc();
+                case RATING_DESC -> product.averageRating.desc();
+                case REVIEW_DESC -> product.reviewCount.desc();
+            };
+            orders.add(orderSpecifier);
+            log.info("[QueryDSL] Primary sort: {}", sortType);
+        } else {
+            // 2. 정렬 조건이 없으면 기본 정렬 (최신순)
             orders.add(product.createdAt.desc());
+            log.info("[QueryDSL] Default sort: createdAt DESC");
         }
+
+        // 3. 보조 정렬: id로 안정적인 정렬 (같은 값일 때)
+        orders.add(product.id.desc());
 
         return orders.toArray(new OrderSpecifier[0]);
     }

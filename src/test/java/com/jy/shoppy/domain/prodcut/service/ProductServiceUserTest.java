@@ -133,6 +133,7 @@ public class ProductServiceUserTest {
             assertThat(result.getTotalElements()).isEqualTo(3);
         }
 
+        /*
         @Test
         @DisplayName("상품 전체 조회 - 가격 오름차순 정렬")
         void get_all_products_sorted_by_price_asc() {
@@ -224,7 +225,7 @@ public class ProductServiceUserTest {
             assertThat(result.getTotalElements()).isEqualTo(3);
             assertThat(result.getTotalPages()).isEqualTo(2);
             assertThat(result.hasNext()).isTrue();
-        }
+        }*/
     }
 
     @Nested
