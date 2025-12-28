@@ -12,6 +12,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,6 +50,14 @@ public class Product {
     @OneToMany(mappedBy = "product")
     private List<OrderProduct> orderProducts;
 
+    // 평균 평점 캐시 (리뷰 작성/수정/삭제 시 업데이트)
+    @Column(precision = 3, scale = 2)
+    private BigDecimal averageRating;
+
+    // 총 리뷰 개수 캐시
+    @Column
+    private Integer reviewCount;
+
     @Builder.Default
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CategoryProduct> categoryProducts = new ArrayList<>();
@@ -56,6 +65,10 @@ public class Product {
     @Builder.Default
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductOption> options = new ArrayList<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductImage> images = new ArrayList<>();
 
     public List<CategoryProduct> getCategoryProducts() {
         if (categoryProducts == null) {
@@ -126,5 +139,28 @@ public class Product {
     public boolean hasOption() {
         return options.stream()
                 .anyMatch(opt -> opt.getColor() != null || opt.getSize() != null);
+    }
+
+    public void updateAverageRating(BigDecimal averageRating, int reviewCount) {
+        this.averageRating = averageRating != null
+                ? averageRating.setScale(2, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
+        this.reviewCount = reviewCount;
+    }
+
+    public void addImage(ProductImage image) {
+        this.images.add(image);
+    }
+
+    public void clearImages() {
+        this.images.clear();
+    }
+
+    public String getThumbnailUrl() {
+        return this.images.stream()
+                .filter(ProductImage::getIsThumbnail)
+                .findFirst()
+                .map(ProductImage::getImageUrl)
+                .orElse(null);
     }
 }

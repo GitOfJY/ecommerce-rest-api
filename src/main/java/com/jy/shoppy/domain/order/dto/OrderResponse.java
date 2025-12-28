@@ -59,4 +59,16 @@ public class OrderResponse {
 
     @Schema(description = "주문 상태")
     private OrderStatus orderStatus;
+
+    @Schema(description = "원가")
+    private BigDecimal originalPrice;
+
+    @Schema(description = "할인 금액")
+    private BigDecimal discountAmount;
+
+    @Schema(description = "적용된 할인율")
+    private BigDecimal discountRate;
+
+    @Schema(description = "회원 등급")
+    private String userGrade;
 }

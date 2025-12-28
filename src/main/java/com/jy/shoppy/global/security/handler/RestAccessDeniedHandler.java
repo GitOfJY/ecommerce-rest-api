@@ -1,6 +1,8 @@
 package com.jy.shoppy.global.security.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jy.shoppy.global.exception.ServiceExceptionCode;
+import com.jy.shoppy.global.response.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
@@ -9,7 +11,6 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.access.AccessDeniedHandler;
 
 import java.io.IOException;
-import java.util.Map;
 
 public class RestAccessDeniedHandler implements AccessDeniedHandler {
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -23,13 +24,15 @@ public class RestAccessDeniedHandler implements AccessDeniedHandler {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding("UTF-8");
 
-        Map<String, Object> error = Map.of(
-                "status", HttpStatus.FORBIDDEN.value(),
-                "error", "Forbidden",
-                "message", "Access denied"
-        );
+        ServiceExceptionCode errorCode = ServiceExceptionCode.ACCESS_DENIED;
 
-        objectMapper.writeValue(response.getWriter(), error);
+        ApiResponse<Object> apiResponse = ApiResponse.builder()
+                .status(HttpStatus.FORBIDDEN.value())
+                .result(false)
+                .error(ApiResponse.Error.of(errorCode.name(), errorCode.getMessage()))
+                .build();
+
+        objectMapper.writeValue(response.getWriter(), apiResponse);
     }
 }
 

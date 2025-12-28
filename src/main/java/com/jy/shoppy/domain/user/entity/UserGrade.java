@@ -1,10 +1,7 @@
 package com.jy.shoppy.domain.user.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.math.BigDecimal;
 
@@ -12,6 +9,7 @@ import java.math.BigDecimal;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString
 @Table(name = "user_grade")
 public class UserGrade {
     @Id
@@ -24,10 +22,4 @@ public class UserGrade {
     private BigDecimal discountRate;
     private Integer freeShippingThreshold;
     private int sortOrder;
-
-    public static UserGrade ref(Long id) {
-        UserGrade grade = new UserGrade();
-        grade.id = id;
-        return grade;
-    }
 }

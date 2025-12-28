@@ -5,6 +5,7 @@ import com.jy.shoppy.domain.prodcut.entity.Product;
 import com.jy.shoppy.domain.prodcut.dto.CreateProductRequest;
 import com.jy.shoppy.domain.prodcut.dto.ProductResponse;
 import com.jy.shoppy.domain.prodcut.dto.UpdateProductRequest;
+import com.jy.shoppy.domain.prodcut.entity.ProductImage;
 import com.jy.shoppy.domain.prodcut.entity.ProductOption;
 import com.jy.shoppy.domain.prodcut.entity.type.StockStatus;
 import org.mapstruct.*;
@@ -15,13 +16,13 @@ import java.util.stream.Collectors;
 
 @Mapper(componentModel = "spring")
 public interface ProductMapper {
-    // 단건 변환
-    @Mapping(target = "totalStock", source = "totalStock")
     @Mapping(target = "stockStatus", source = "stockStatus")
+    @Mapping(target = "totalStock", source = "totalStock")
     @Mapping(target = "categoryIds", expression = "java(extractCategoryIds(product))")
+    @Mapping(target = "thumbnailUrl", expression = "java(product.getThumbnailUrl())")
+    @Mapping(target = "imageUrls", expression = "java(mapImageUrls(product))")
     ProductResponse toResponse(Product product);
 
-    // 리스트 변환: 개별 요소에 대해 위 toResponse를 재사용
     List<ProductResponse> toResponseList(List<Product> products);
 
     default ProductResponse fromCategoryProduct(CategoryProduct cp) {
@@ -54,6 +55,16 @@ public interface ProductMapper {
         return cps.stream()
                 .map(cp -> cp.getCategory().getId())
                 .distinct()
+                .collect(Collectors.toList());
+    }
+
+    default List<String> mapImageUrls(Product product) {
+        if (product.getImages() == null || product.getImages().isEmpty()) {
+            return List.of();
+        }
+        return product.getImages().stream()
+                .sorted((i1, i2) -> Integer.compare(i1.getDisplayOrder(), i2.getDisplayOrder()))
+                .map(ProductImage::getImageUrl)
                 .collect(Collectors.toList());
     }
 }

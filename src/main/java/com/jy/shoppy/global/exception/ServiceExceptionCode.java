@@ -10,6 +10,12 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public enum ServiceExceptionCode {
+    AUTHENTICATION_REQUIRED("인증이 필요합니다."),
+    INVALID_CREDENTIALS("이메일 또는 비밀번호가 일치하지 않습니다."),
+    USER_NOT_FOUND("존재하지 않는 사용자입니다."),
+    ACCESS_DENIED("접근 권한이 없습니다."),
+    AUTHENTICATION_FAILED("인증에 실패했습니다."),
+
     UNAUTHORIZED_ACCESS("인증되지 않은 접근입니다."),
     UNAUTHORIZED("권한이 없습니다."),
     JSON_PROCESSING_ERROR("Json 데이터 처리 중 에러가 발생하였습니다."),
@@ -22,6 +28,7 @@ public enum ServiceExceptionCode {
     CANNOT_FOUND_USER("존재하지 않는 회원입니다."),
     UNAUTHORIZED_PASSWORD("비밀번호가 일치하지 않습니다."),
     ALREADY_WITHDRAWN_USER("탈퇴한 회원입니다."),
+    CANNOT_FOUND_USER_GRADE("존재하지 않는 등급입니다."),
 
     ADMIN_ONLY_REFUND_PROCESS("관리자만 환불 처리가 가능합니다."),
 
@@ -59,6 +66,14 @@ public enum ServiceExceptionCode {
     GUEST_ORDER_NOT_MATCH("주문자 정보가 일치하지 않습니다"),
     INVALID_GUEST_PASSWORD("비밀번호가 일치하지 않습니다"),
 
+    CANNOT_FOUND_REVIEW("리뷰를 찾을 수 없습니다."),
+    REVIEW_ALREADY_EXISTS("이미 리뷰가 작성되었습니다."),
+    CANNOT_REVIEW_NOT_COMPLETED("완료된 주문만 리뷰 작성이 가능합니다."),
+
+    EMPTY_FILE("업로드할 파일이 없습니다."),
+    INVALID_FILE_TYPE("지원하지 않는 파일 형식입니다. (jpg, jpeg, png, gif, webp만 가능)"),
+    FILE_UPLOAD_FAILED("파일 업로드에 실패했습니다."),
+    FILE_TOO_LARGE("파일 크기는 5MB를 초과할 수 없습니다."),
 
     // ... 다른 예외 코드들
     ;

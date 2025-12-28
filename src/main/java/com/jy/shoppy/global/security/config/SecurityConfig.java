@@ -45,10 +45,12 @@ public class SecurityConfig {
                 .securityMatcher("/api/**")
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(SECURITY_EXCLUDE_PATHS).permitAll()
-                        // 인증
+                        // 인증, 상품,카테고리 조회 - 누구나 가능
                         .requestMatchers("/api/auth/**").permitAll()
-                        // 상품 조회 - 누구나 가능
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
+                        .requestMatchers("/api/category/**").permitAll()
+                        // Redis 재적재 (개발용) - 임시 허용
+                        .requestMatchers(HttpMethod.POST, "/api/products/redis/reload").permitAll()
                         // 주문 - 비회원 주문 허용
                         .requestMatchers(HttpMethod.POST, "/api/orders/guest").permitAll()
                         .requestMatchers("/api/orders/**").authenticated()
@@ -57,6 +59,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/users/reset-password").permitAll()
                         // 관리자 API - ADMIN 권한 필요
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        // ===== 이미지 업로드 - 관리자만 =====
+                        .requestMatchers("/api/upload/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .csrf(AbstractHttpConfigurer::disable)

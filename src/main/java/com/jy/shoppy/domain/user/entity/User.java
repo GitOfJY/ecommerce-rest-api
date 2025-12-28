@@ -78,14 +78,14 @@ public class User {
         this.passwordHash = newPassword;
     }
 
-    public static User registerUser(RegisterUserRequest dto, String encodedPassword) {
+    public static User registerUser(RegisterUserRequest dto, String encodedPassword, UserGrade bronzeGrade) {
         return User.builder()
                 .username(dto.getUsername())
                 .email(dto.getEmail())
                 .phone(dto.getPhone().replaceAll("-", ""))
                 .passwordHash(encodedPassword)
                 .role(Role.ref(dto.getRoleId()))
-                .userGrade(UserGrade.ref(1L))
+                .userGrade(bronzeGrade)
                 .totalPurchaseAmount(BigDecimal.ZERO)
                 .status(UserStatus.ACTIVE)
                 .build();

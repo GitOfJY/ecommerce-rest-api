@@ -89,6 +89,12 @@ public class OrderService {
 
     private OrderResponse createOrderInternal(User user, Guest guest, List<OrderProductRequest> products, DeliveryAddress deliveryAddress) {
         List<OrderProduct> orderProducts = new ArrayList<>();
+
+        BigDecimal discountRate = BigDecimal.ZERO;
+        if (user != null && user.getUserGrade() != null) {
+            discountRate = user.getUserGrade().getDiscountRate();
+        }
+
         for (OrderProductRequest item : products) {
             // 1. 상품 조회
             Product product = productRepository.findById(item.getProductId())
@@ -105,13 +111,16 @@ public class OrderService {
             decreaseStock(productOption, item.getQuantity());
 
             // 4. 주문 가격 계산 (기본가 + 옵션 추가금)
-            BigDecimal orderPrice = productOption.getTotalPrice();
+            BigDecimal basePrice = productOption.getTotalPrice();
+
+            // 5. 등급 할인 적용
+            BigDecimal discountedPrice = applyDiscount(basePrice, discountRate);
 
             OrderProduct orderProduct = OrderProduct.createOrderProduct(
                     product,
                     item.getColor(),
                     item.getSize(),
-                    orderPrice,
+                    discountedPrice,
                     item.getQuantity()
             );
             orderProducts.add(orderProduct);
@@ -131,6 +140,22 @@ public class OrderService {
         orderRepository.save(order);
 
         return orderMapper.toResponse(order);
+    }
+
+    // 등급 할인율 적용
+    private BigDecimal applyDiscount(BigDecimal price, BigDecimal discountRate) {
+        if (discountRate == null || discountRate.compareTo(BigDecimal.ZERO) == 0) {
+            return price;
+        }
+
+        // 할인 금액 = 원가 * 할인율
+        BigDecimal discountAmount = price.multiply(discountRate);
+
+        // 할인된 가격 = 원가 - 할인 금액
+        BigDecimal discountedPrice = price.subtract(discountAmount);
+
+        // 소수점 이하 반올림
+        return discountedPrice.setScale(0, BigDecimal.ROUND_HALF_UP);
     }
 
     private String generateOrderNumber() {
