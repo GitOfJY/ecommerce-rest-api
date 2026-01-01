@@ -15,7 +15,6 @@ import java.util.List;
 @Builder
 @Schema(description = "리뷰 응답")
 public class ReviewResponse {
-
     @Schema(description = "리뷰 ID")
     private Long reviewId;
 

@@ -4,6 +4,7 @@ import com.jy.shoppy.domain.order.dto.OrderResponse;
 import com.jy.shoppy.domain.order.entity.Order;
 import com.jy.shoppy.domain.order.entity.OrderProduct;
 import com.jy.shoppy.domain.order.entity.type.OrderStatus;
+import com.jy.shoppy.domain.user.entity.User;
 import com.jy.shoppy.global.exception.ServiceException;
 import com.jy.shoppy.global.exception.ServiceExceptionCode;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -47,6 +48,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
         WHERE op.id = :orderProductId
     """)
     OrderProduct findOrderProductsById(@Param("orderProductId") Long orderProductId);
+
+    Long user(User user);
 
     /**
      * 특정 사용자의 리뷰 작성 가능한 주문 상품 목록 조회

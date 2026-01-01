@@ -13,20 +13,6 @@ import java.util.stream.Collectors;
 
 @Mapper(componentModel = "spring")
 public interface ReviewMapper {
-    // ===== 작성 가능한 리뷰 목록 매핑 =====
-    @Mapping(target = "orderProductId", source = "id")
-    @Mapping(target = "orderId", source = "order.id")
-    @Mapping(target = "productId", source = "product.id")
-    @Mapping(target = "productName", source = "product.name")
-    @Mapping(target = "selectedColor", source = "selectedColor")
-    @Mapping(target = "selectedSize", source = "selectedSize")
-    @Mapping(target = "orderPrice", source = "orderPrice")
-    @Mapping(target = "quantity", source = "quantity")
-    //@Mapping(target = "orderDate", source = "order.createdAt")
-    ReviewableProductResponse toReviewableResponse(OrderProduct orderProduct);
-
-    List<ReviewableProductResponse> toReviewableResponseList(List<OrderProduct> orderProducts);
-
     // ===== 작성된 리뷰 매핑 =====
     @Mapping(target = "reviewId", source = "id")
     @Mapping(target = "username", source = "user.username")
@@ -62,4 +48,21 @@ public interface ReviewMapper {
                 .map(img -> img.getImageUrl())
                 .collect(Collectors.toList());
     }
+
+    /**
+     * OrderProduct → ReviewableProductResponse 매핑
+     */
+    @Mapping(source = "id", target = "orderProductId")
+    @Mapping(source = "order.id", target = "orderId")
+    @Mapping(source = "order.orderDate", target = "orderDate")
+    @Mapping(source = "product.id", target = "productId")
+    @Mapping(source = "product.name", target = "productName")
+    @Mapping(source = "product.price", target = "productPrice")
+    @Mapping(target = "thumbnailUrl", expression = "java(orderProduct.getProduct().getThumbnailUrl())")
+    @Mapping(source = "selectedColor", target = "color")
+    @Mapping(source = "selectedSize", target = "size")
+    @Mapping(source = "quantity", target = "quantity")
+    ReviewableProductResponse toReviewableResponse(OrderProduct orderProduct);
+
+    List<ReviewableProductResponse> toReviewableResponseList(List<OrderProduct> orderProducts);
 }

@@ -3,6 +3,7 @@ package com.jy.shoppy.domain.review.entity;
 import com.jy.shoppy.domain.order.entity.OrderProduct;
 import com.jy.shoppy.domain.prodcut.entity.Product;
 import com.jy.shoppy.domain.review.dto.CreateReviewRequest;
+import com.jy.shoppy.domain.review.dto.UpdateReviewRequest;
 import com.jy.shoppy.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -68,7 +69,7 @@ public class Review {
 
     @Builder.Default
     @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ReviewComments> comments = new ArrayList<>();
+    private List<ReviewComment> comments = new ArrayList<>();
 
     @Builder.Default
     @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -76,6 +77,10 @@ public class Review {
 
     public void addImage(ReviewImage image) {
         this.images.add(image);
+    }
+
+    public void clearImages() {
+        this.images.clear();
     }
 
     public int getHelpfulCount() {
@@ -97,5 +102,13 @@ public class Review {
                 .thicknessRating(req.getThicknessRating())
                 .content(req.getContent())
                 .build();
+    }
+
+    public void update(UpdateReviewRequest req) {
+        this.rating = req.getRating();
+        this.sizeRating = req.getSizeRating();
+        this.colorRating = req.getColorRating();
+        this.thicknessRating = req.getThicknessRating();
+        this.content = req.getContent();
     }
 }

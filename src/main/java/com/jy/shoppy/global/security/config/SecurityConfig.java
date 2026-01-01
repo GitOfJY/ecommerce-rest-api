@@ -45,15 +45,19 @@ public class SecurityConfig {
                 .securityMatcher("/api/**")
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(SECURITY_EXCLUDE_PATHS).permitAll()
-                        // 인증, 상품,카테고리 조회 - 누구나 가능
+                        // 인증, 상품,카테고리, 리뷰, 댓글 조회 - 누구나 가능
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                         .requestMatchers("/api/category/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/reviews/product/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/reviews/*/comments").permitAll()
                         // Redis 재적재 (개발용) - 임시 허용
                         .requestMatchers(HttpMethod.POST, "/api/products/redis/reload").permitAll()
                         // 주문 - 비회원 주문 허용
                         .requestMatchers(HttpMethod.POST, "/api/orders/guest").permitAll()
                         .requestMatchers("/api/orders/**").authenticated()
+                        // 나머지 리뷰 API - 인증 필요
+                        .requestMatchers("/api/reviews/**").authenticated()
                         // 이메일/비밀번호 찾기
                         .requestMatchers(HttpMethod.POST, "/api/users/find-email").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users/reset-password").permitAll()

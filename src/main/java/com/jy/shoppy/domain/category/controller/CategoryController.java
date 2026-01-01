@@ -8,6 +8,7 @@ import com.jy.shoppy.domain.category.dto.UpdateCategoryRequest;
 import com.jy.shoppy.global.response.ApiResponse;
 import com.jy.shoppy.global.util.JsonUtil;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "Category", description = "카테고리 API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/categories")

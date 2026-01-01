@@ -10,16 +10,20 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Getter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-@Schema(description = "리뷰 작성 가능한 상품 응답")
+@Schema(description = "리뷰 작성 가능한 상품 정보")
 public class ReviewableProductResponse {
-    @Schema(description = "주문 상품 ID")
+
+    @Schema(description = "주문 상품 ID (리뷰 작성 시 필요)")
     private Long orderProductId;
 
     @Schema(description = "주문 ID")
     private Long orderId;
+
+    @Schema(description = "주문 날짜")
+    private LocalDateTime orderDate;
 
     @Schema(description = "상품 ID")
     private Long productId;
@@ -27,18 +31,18 @@ public class ReviewableProductResponse {
     @Schema(description = "상품명")
     private String productName;
 
-    @Schema(description = "선택한 색상")
-    private String selectedColor;
+    @Schema(description = "상품 가격")
+    private BigDecimal productPrice;
 
-    @Schema(description = "선택한 사이즈")
-    private String selectedSize;
+    @Schema(description = "상품 썸네일 URL")
+    private String thumbnailUrl;
 
-    @Schema(description = "주문 가격")
-    private BigDecimal orderPrice;
+    @Schema(description = "구매 옵션 (색상)")
+    private String color;
 
-    @Schema(description = "주문 수량")
+    @Schema(description = "구매 옵션 (사이즈)")
+    private String size;
+
+    @Schema(description = "구매 수량")
     private Integer quantity;
-
-    @Schema(description = "주문 일자")
-    private LocalDateTime orderDate;
 }

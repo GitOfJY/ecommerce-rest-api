@@ -9,6 +9,8 @@ import lombok.*;
 import org.hibernate.annotations.BatchSize;
 import com.jy.shoppy.global.exception.ServiceException;
 import com.jy.shoppy.global.exception.ServiceExceptionCode;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
