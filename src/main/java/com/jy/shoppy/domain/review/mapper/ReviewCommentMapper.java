@@ -16,6 +16,9 @@ public interface ReviewCommentMapper {
     @Mapping(source = "user.username", target = "username")
     @Mapping(source = "content", target = "content")
     @Mapping(source = "user.role.name", target = "userRole")
+    @Mapping(source = "parentComment.id", target = "parentCommentId")
+    @Mapping(target = "depth", expression = "java(comment.getDepth())")
+    @Mapping(target = "childComments", ignore = true)
     @Mapping(source = "createdAt", target = "createdAt")
     @Mapping(source = "updatedAt", target = "updatedAt")
     CommentResponse toResponse(ReviewComment comment);

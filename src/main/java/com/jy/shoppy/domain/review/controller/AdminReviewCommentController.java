@@ -33,7 +33,6 @@ public class AdminReviewCommentController {
     )
     public ResponseEntity<ApiResponse<Page<CommentResponse>>> getAllComments(
             @PageableDefault(size = 20) Pageable pageable) {
-
         return ResponseEntity.ok(
                 ApiResponse.success(adminCommentService.getAllComments(pageable), HttpStatus.OK)
         );
@@ -49,14 +48,13 @@ public class AdminReviewCommentController {
     )
     public ResponseEntity<ApiResponse<CommentResponse>> getComment(
             @Parameter(description = "댓글 ID") @PathVariable Long commentId) {
-
         return ResponseEntity.ok(
                 ApiResponse.success(adminCommentService.getComment(commentId), HttpStatus.OK)
         );
     }
 
     /**
-     * ✅ 댓글 삭제 (관리자 - 모든 댓글 삭제 가능)
+     * 댓글 삭제 (관리자 - 모든 댓글 삭제 가능)
      */
     @DeleteMapping("/{commentId}")
     @Operation(
@@ -65,7 +63,6 @@ public class AdminReviewCommentController {
     )
     public ResponseEntity<ApiResponse<String>> deleteComment(
             @Parameter(description = "댓글 ID") @PathVariable Long commentId) {
-
         adminCommentService.deleteComment(commentId);
         return ResponseEntity.ok(
                 ApiResponse.success("댓글이 삭제되었습니다.", HttpStatus.OK)
@@ -83,7 +80,6 @@ public class AdminReviewCommentController {
     public ResponseEntity<ApiResponse<Page<CommentResponse>>> getReviewComments(
             @Parameter(description = "리뷰 ID") @PathVariable Long reviewId,
             @PageableDefault(size = 20) Pageable pageable) {
-
         return ResponseEntity.ok(
                 ApiResponse.success(
                         adminCommentService.getReviewComments(reviewId, pageable),
@@ -103,7 +99,6 @@ public class AdminReviewCommentController {
     public ResponseEntity<ApiResponse<Page<CommentResponse>>> getUserComments(
             @Parameter(description = "사용자 ID") @PathVariable Long userId,
             @PageableDefault(size = 20) Pageable pageable) {
-
         return ResponseEntity.ok(
                 ApiResponse.success(
                         adminCommentService.getUserComments(userId, pageable),

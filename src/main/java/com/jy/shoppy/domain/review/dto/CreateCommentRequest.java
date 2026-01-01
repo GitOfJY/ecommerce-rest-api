@@ -16,4 +16,7 @@ public class CreateCommentRequest {
     @Size(min = 1, max = 500, message = "댓글은 1자 이상 500자 이하로 작성해주세요.")
     @Schema(description = "댓글 내용 (1~500자)", example = "좋은 리뷰 감사합니다!")
     private String content;
+
+    @Schema(description = "부모 댓글 ID (대댓글인 경우)", example = "5")
+    private Long parentCommentId;
 }

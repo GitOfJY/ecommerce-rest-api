@@ -28,13 +28,12 @@ public class ReviewCommentController {
     @PostMapping("/{reviewId}/comments")
     @Operation(
             summary = "리뷰 댓글 작성",
-            description = "리뷰에 댓글을 작성합니다. 관리자가 작성하면 판매자 답글로 표시됩니다."
+            description = "리뷰에 댓글을 작성합니다."
     )
     public ResponseEntity<ApiResponse<CommentResponse>> create(
             @Parameter(description = "리뷰 ID") @PathVariable Long reviewId,
             @RequestBody @Valid CreateCommentRequest req,
             @AuthenticationPrincipal Account account) {
-
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(
                         commentService.create(reviewId, req, account),
@@ -42,9 +41,6 @@ public class ReviewCommentController {
                 ));
     }
 
-    /**
-     * 댓글 수정
-     */
     @PutMapping("/comments/{commentId}")
     @Operation(
             summary = "댓글 수정",
@@ -54,15 +50,11 @@ public class ReviewCommentController {
             @Parameter @PathVariable Long commentId,
             @RequestBody @Valid UpdateCommentRequest req,
             @AuthenticationPrincipal Account account) {
-
         return ResponseEntity.ok(
                 ApiResponse.success(commentService.update(commentId, req, account), HttpStatus.OK)
         );
     }
 
-    /**
-     * 댓글 삭제
-     */
     @DeleteMapping("/comments/{commentId}")
     @Operation(
             summary = "댓글 삭제",
@@ -77,9 +69,6 @@ public class ReviewCommentController {
         );
     }
 
-    /**
-     * 특정 리뷰의 댓글 목록 조회 (로그인 불필요)
-     */
     @GetMapping("/{reviewId}/comments")
     @Operation(
             summary = "리뷰 댓글 목록 조회",
@@ -92,9 +81,6 @@ public class ReviewCommentController {
         );
     }
 
-    /**
-     * 내가 작성한 댓글 목록 조회
-     */
     @GetMapping("/comments/my")
     @Operation(
             summary = "내 댓글 목록 조회",

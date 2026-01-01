@@ -1,13 +1,9 @@
 package com.jy.shoppy.domain.review.service;
 
 import com.jy.shoppy.domain.auth.dto.Account;
-import com.jy.shoppy.domain.order.dto.OrderResponse;
-import com.jy.shoppy.domain.order.entity.Order;
 import com.jy.shoppy.domain.order.entity.OrderProduct;
 import com.jy.shoppy.domain.order.entity.type.OrderStatus;
 import com.jy.shoppy.domain.order.repository.OrderProductRepository;
-import com.jy.shoppy.domain.order.repository.OrderRepository;
-import com.jy.shoppy.domain.prodcut.dto.ProductResponse;
 import com.jy.shoppy.domain.prodcut.entity.Product;
 import com.jy.shoppy.domain.prodcut.repository.ProductRepository;
 import com.jy.shoppy.domain.review.dto.*;
@@ -37,7 +33,6 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Slf4j
 public class ReviewService {
-    private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private final ReviewRepository reviewRepository;
     private final ProductRepository productRepository;

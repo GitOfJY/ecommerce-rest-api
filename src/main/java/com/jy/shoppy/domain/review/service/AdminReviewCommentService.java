@@ -41,7 +41,7 @@ public class AdminReviewCommentService {
     }
 
     /**
-     * ✅ 댓글 삭제 (관리자 - 권한 검증 없음)
+     * 댓글 삭제
      */
     @Transactional
     public void deleteComment(Long commentId) {
@@ -52,10 +52,7 @@ public class AdminReviewCommentService {
         // 2. 권한 검증 없음 (관리자는 모든 댓글 삭제 가능)
 
         // 3. 댓글 삭제
-        Long userId = comment.getUser().getId();
         commentRepository.delete(comment);
-
-        log.info("[Admin] Comment deleted: commentId={}, userId={}", commentId, userId);
     }
 
     /**

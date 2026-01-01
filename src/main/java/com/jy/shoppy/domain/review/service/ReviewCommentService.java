@@ -24,14 +24,15 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class ReviewCommentService {
-
     private final ReviewCommentRepository commentRepository;
     private final ReviewRepository reviewRepository;
     private final UserRepository userRepository;
     private final ReviewCommentMapper commentMapper;
 
     /**
-     * ✅ 댓글 작성 (일반 사용자 + 관리자 모두 사용)
+     * 댓글 작성
+     * - 일반 사용자 + 관리자 모두 사용
+     * - 대댓글 지원
      */
     @Transactional
     public CommentResponse create(Long reviewId, CreateCommentRequest req, Account account) {
@@ -43,14 +44,57 @@ public class ReviewCommentService {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_REVIEW));
 
-        // 3. ✅ 댓글 생성 (isSellerReply 파라미터 제거)
-        ReviewComment comment = ReviewComment.create(review, user, req.getContent());
+        // 3. 부모 댓글 조회 (대댓글인 경우)
+        ReviewComment parentComment = null;
+        if (req.getParentCommentId() != null) {
+            parentComment = commentRepository.findById(req.getParentCommentId())
+                    .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_COMMENT));
+
+            // 같은 리뷰의 댓글인지 확인
+            if (!parentComment.getReview().getId().equals(reviewId)) {
+                throw new ServiceException(ServiceExceptionCode.INVALID_PARENT_COMMENT);
+            }
+        }
+
+        // 4. 댓글 생성
+        ReviewComment comment = ReviewComment.create(review, user, req.getContent(), parentComment);
         commentRepository.save(comment);
 
-        log.info("Comment created: commentId={}, reviewId={}, userId={}, userRole={}",
-                comment.getId(), reviewId, user.getId(), user.getRole().getName());
-
         return commentMapper.toResponse(comment);
+    }
+
+    /**
+     * 특정 리뷰의 댓글 목록 조회 (계층 구조)
+     */
+    @Transactional(readOnly = true)
+    public List<CommentResponse> getComments(Long reviewId) {
+        // 1. 모든 댓글 조회
+        List<ReviewComment> allComments = commentRepository.findByReviewIdWithUserAndRole(reviewId);
+
+        // 2. 최상위 댓글만 필터링
+        List<ReviewComment> rootComments = allComments.stream()
+                .filter(comment -> comment.getParentComment() == null)
+                .toList();
+
+        // 3. DTO 변환 및 계층 구조 구성
+        return rootComments.stream()
+                .map(this::buildCommentTree)
+                .toList();
+    }
+
+    /**
+     * 댓글 트리 구조 생성 (재귀)
+     */
+    private CommentResponse buildCommentTree(ReviewComment comment) {
+        CommentResponse response = commentMapper.toResponse(comment);
+
+        // 자식 댓글들을 재귀적으로 변환
+        List<CommentResponse> children = comment.getChildComments().stream()
+                .map(this::buildCommentTree)
+                .toList();
+
+        response.addChildComment(children);
+        return response;
     }
 
     /**
@@ -71,8 +115,6 @@ public class ReviewCommentService {
         comment.update(req.getContent());
         commentRepository.save(comment);
 
-        log.info("Comment updated: commentId={}, userId={}", commentId, account.getAccountId());
-
         return commentMapper.toResponse(comment);
     }
 
@@ -92,17 +134,6 @@ public class ReviewCommentService {
 
         // 3. 댓글 삭제
         commentRepository.delete(comment);
-
-        log.info("Comment deleted: commentId={}, userId={}", commentId, account.getAccountId());
-    }
-
-    /**
-     * 특정 리뷰의 댓글 목록 조회
-     */
-    @Transactional(readOnly = true)
-    public List<CommentResponse> getComments(Long reviewId) {
-        List<ReviewComment> comments = commentRepository.findByReviewIdOrderByCreatedAtAsc(reviewId);
-        return commentMapper.toResponseList(comments);
     }
 
     /**

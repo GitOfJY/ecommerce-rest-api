@@ -34,7 +34,6 @@ public class AdminReviewController {
     )
     public ResponseEntity<ApiResponse<Page<ReviewResponse>>> getAllReviews(
             @PageableDefault(size = 20) Pageable pageable) {
-
         return ResponseEntity.ok(
                 ApiResponse.success(adminReviewService.getAllReviews(pageable), HttpStatus.OK)
         );
@@ -49,8 +48,7 @@ public class AdminReviewController {
             description = "특정 리뷰를 상세 조회합니다."
     )
     public ResponseEntity<ApiResponse<ReviewResponse>> getReview(
-            @Parameter(description = "리뷰 ID") @PathVariable Long reviewId) {
-
+            @Parameter @PathVariable Long reviewId) {
         return ResponseEntity.ok(
                 ApiResponse.success(adminReviewService.getReview(reviewId), HttpStatus.OK)
         );
@@ -65,8 +63,7 @@ public class AdminReviewController {
             description = "부적절한 리뷰를 삭제합니다. 관리자는 모든 리뷰를 삭제할 수 있습니다."
     )
     public ResponseEntity<ApiResponse<String>> deleteReview(
-            @Parameter(description = "리뷰 ID") @PathVariable Long reviewId) {
-
+            @Parameter @PathVariable Long reviewId) {
         adminReviewService.deleteReview(reviewId);
         return ResponseEntity.ok(
                 ApiResponse.success("리뷰가 삭제되었습니다.", HttpStatus.OK)
@@ -82,9 +79,8 @@ public class AdminReviewController {
             description = "특정 상품의 모든 리뷰를 조회합니다."
     )
     public ResponseEntity<ApiResponse<Page<ReviewResponse>>> getProductReviews(
-            @Parameter(description = "상품 ID") @PathVariable Long productId,
+            @Parameter @PathVariable Long productId,
             @PageableDefault(size = 20) Pageable pageable) {
-
         return ResponseEntity.ok(
                 ApiResponse.success(
                         adminReviewService.getProductReviews(productId, pageable),
@@ -102,9 +98,8 @@ public class AdminReviewController {
             description = "특정 사용자가 작성한 모든 리뷰를 조회합니다."
     )
     public ResponseEntity<ApiResponse<Page<ReviewResponse>>> getUserReviews(
-            @Parameter(description = "사용자 ID") @PathVariable Long userId,
+            @Parameter @PathVariable Long userId,
             @PageableDefault(size = 20) Pageable pageable) {
-
         return ResponseEntity.ok(
                 ApiResponse.success(
                         adminReviewService.getUserReviews(userId, pageable),

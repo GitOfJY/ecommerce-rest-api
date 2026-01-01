@@ -1,8 +1,6 @@
 package com.jy.shoppy.domain.review.repository;
 
 import com.jy.shoppy.domain.review.entity.Review;
-import com.jy.shoppy.global.exception.ServiceException;
-import com.jy.shoppy.global.exception.ServiceExceptionCode;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
