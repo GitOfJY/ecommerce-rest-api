@@ -2,7 +2,6 @@ package com.jy.shoppy.domain.address.controller;
 
 import com.jy.shoppy.domain.address.dto.DeliveryAddressRequest;
 import com.jy.shoppy.domain.address.dto.DeliveryAddressResponse;
-import com.jy.shoppy.domain.address.entity.DeliveryAddress;
 import com.jy.shoppy.domain.address.service.DeliveryAddressService;
 import com.jy.shoppy.domain.auth.dto.Account;
 import com.jy.shoppy.global.response.ApiResponse;

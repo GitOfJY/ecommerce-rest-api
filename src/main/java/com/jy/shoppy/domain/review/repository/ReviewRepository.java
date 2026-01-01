@@ -30,13 +30,18 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     List<Review>  findByUserId(Long userId);
 
-    List<Review> findByProductId(Long productId);
-
     boolean existsByOrderProductId(Long orderProductId);
 
     Page<Review> findByProductId(Long productId, Pageable pageable);
 
     Page<Review> findByUserId(Long userId, Pageable pageable);
 
-    Page<Review> findByRatingLessThanEqual(Integer rating, Pageable pageable);
+    /**
+     * 평점 필터링 + 페이징
+     */
+    Page<Review> findByProductIdAndRatingGreaterThanEqual(
+            Long productId,
+            Integer minRating,
+            Pageable pageable
+    );
 }

@@ -1,6 +1,8 @@
 package com.jy.shoppy.domain.review.service;
 
 import com.jy.shoppy.domain.auth.dto.Account;
+import com.jy.shoppy.domain.order.dto.OrderResponse;
+import com.jy.shoppy.domain.order.entity.Order;
 import com.jy.shoppy.domain.order.entity.OrderProduct;
 import com.jy.shoppy.domain.order.entity.type.OrderStatus;
 import com.jy.shoppy.domain.order.repository.OrderProductRepository;
@@ -19,12 +21,17 @@ import com.jy.shoppy.global.exception.ServiceException;
 import com.jy.shoppy.global.exception.ServiceExceptionCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -175,17 +182,18 @@ public class ReviewService {
     }
 
     /**
-     * 작성 가능한 리뷰 목록 조회
+     * 작성 가능한 리뷰 상품 목록 조회
      */
-    // TODO 수정
-//    @Transactional(readOnly = true)
-//    public List<ReviewableProductResponse> getReviewableList(Account account) {
-//        User user = userRepository.findById(account.getAccountId())
-//                .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_USER));
-//
-//        List<OrderProduct> orderProducts = orderRepository.findReviewableOrderProducts(user.getId());
-//        return reviewMapper.toReviewableResponseList(orderProducts);
-//    }
+    public List<ReviewableProductResponse> getReviewableProducts(Account account) {
+        // 1. 리뷰 작성 가능한 주문 상품 조회
+        List<OrderProduct> orderProducts = orderProductRepository
+                .findReviewableOrderProducts(account.getAccountId());
+
+        // 2. DTO 변환
+        List<ReviewableProductResponse> responses = reviewMapper
+                .toReviewableResponseList(orderProducts);
+        return responses;
+    }
 
     /**
      * 내가 작성한 리뷰 목록 조회
@@ -200,8 +208,45 @@ public class ReviewService {
      * 특정 상품의 리뷰 목록 조회
      */
     @Transactional(readOnly = true)
-    public List<ReviewResponse> getProductReviews(Long productId) {
-        List<Review> reviews = reviewRepository.findByProductId(productId);
-        return reviewMapper.toResponseList(reviews);
+    public Page<ReviewResponse> getProductReviews(Long productId, Integer minRating, String sort, Pageable pageable) {
+        // 1. 정렬 조건 생성
+        Sort sortCondition = createSortCondition(sort);
+
+        // 2. Pageable에 정렬 적용
+        Pageable sortedPageable = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                sortCondition
+        );
+
+        // 3. 리뷰 조회
+        Page<Review> reviews;
+        if (minRating != null) {
+            // 평점 필터링 있음
+            reviews = reviewRepository.findByProductIdAndRatingGreaterThanEqual(
+                    productId, minRating, sortedPageable);
+        } else {
+            // 평점 필터링 없음
+            reviews = reviewRepository.findByProductId(productId, sortedPageable);
+        }
+
+        // 4. DTO 변환
+        return reviews.map(reviewMapper::toResponse);
+    }
+
+    /**
+     * 정렬 조건 생성
+     */
+    private Sort createSortCondition(String sort) {
+        return switch (sort.toLowerCase()) {
+            case "latest" -> Sort.by(Sort.Direction.DESC, "createdAt");
+            case "rating_high" -> Sort.by(Sort.Direction.DESC, "rating")
+                    .and(Sort.by(Sort.Direction.DESC, "createdAt"));
+            case "rating_low" -> Sort.by(Sort.Direction.ASC, "rating")
+                    .and(Sort.by(Sort.Direction.DESC, "createdAt"));
+            case "helpful" -> Sort.by(Sort.Direction.DESC, "helpfulCount")
+                    .and(Sort.by(Sort.Direction.DESC, "createdAt"));
+            default -> Sort.by(Sort.Direction.DESC, "createdAt");
+        };
     }
 }

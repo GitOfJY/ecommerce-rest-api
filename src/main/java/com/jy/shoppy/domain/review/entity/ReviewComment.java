@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ReviewComments {
+public class ReviewComment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -40,4 +40,16 @@ public class ReviewComments {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    public static ReviewComment create(Review review, User user, String content) {
+        return ReviewComment.builder()
+                .review(review)
+                .user(user)
+                .content(content)
+                .build();
+    }
+
+    public void update(String content) {
+        this.content = content;
+    }
 }

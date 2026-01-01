@@ -25,7 +25,6 @@ import java.util.List;
 import static com.jy.shoppy.domain.category.entity.QCategoryProduct.categoryProduct;
 import static com.jy.shoppy.domain.prodcut.entity.QProduct.product;
 import static com.jy.shoppy.domain.prodcut.entity.QProductOption.productOption;
-import static com.jy.shoppy.domain.prodcut.entity.type.SortType.*;
 
 @Repository
 @RequiredArgsConstructor

@@ -3,7 +3,6 @@ package com.jy.shoppy.domain.order.controller;
 import com.jy.shoppy.domain.order.dto.OrderResponse;
 import com.jy.shoppy.domain.order.dto.SearchOrderCond;
 import com.jy.shoppy.domain.order.service.AdminOrderService;
-import com.jy.shoppy.domain.order.service.OrderService;
 import com.jy.shoppy.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

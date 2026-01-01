@@ -70,6 +70,8 @@ public enum ServiceExceptionCode {
     REVIEW_ALREADY_EXISTS("이미 리뷰가 작성되었습니다."),
     CANNOT_REVIEW_NOT_COMPLETED("완료된 주문만 리뷰 작성이 가능합니다."),
 
+    CANNOT_FOUND_COMMENT("댓글을 찾을 수 없습니다."),
+
     EMPTY_FILE("업로드할 파일이 없습니다."),
     INVALID_FILE_TYPE("지원하지 않는 파일 형식입니다. (jpg, jpeg, png, gif, webp만 가능)"),
     FILE_UPLOAD_FAILED("파일 업로드에 실패했습니다."),
