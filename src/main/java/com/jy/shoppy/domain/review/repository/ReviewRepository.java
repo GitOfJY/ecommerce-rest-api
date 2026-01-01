@@ -3,6 +3,8 @@ package com.jy.shoppy.domain.review.repository;
 import com.jy.shoppy.domain.review.entity.Review;
 import com.jy.shoppy.global.exception.ServiceException;
 import com.jy.shoppy.global.exception.ServiceExceptionCode;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -31,4 +33,10 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     List<Review> findByProductId(Long productId);
 
     boolean existsByOrderProductId(Long orderProductId);
+
+    Page<Review> findByProductId(Long productId, Pageable pageable);
+
+    Page<Review> findByUserId(Long userId, Pageable pageable);
+
+    Page<Review> findByRatingLessThanEqual(Integer rating, Pageable pageable);
 }

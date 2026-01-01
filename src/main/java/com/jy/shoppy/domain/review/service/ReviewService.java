@@ -116,12 +116,36 @@ public class ReviewService {
         // 6. 평점이 변경되었으면 상품 평점 업데이트
         if (ratingChanged) {
             updateProductRating(review.getProduct().getId());
+            log.info("Product rating updated due to review update: reviewId={}, productId={}",
+                    reviewId, review.getProduct().getId());
         }
 
         return reviewMapper.toResponse(review);
     }
 
-    // TODO 리뷰 삭제
+    /**
+     * 리뷰 삭제
+     */
+    @Transactional
+    public void delete(Long reviewId, Account account) {
+        // 1. 리뷰 조회
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_REVIEW));
+
+        // 2. 권한 검증 (본인 확인)
+        if (!review.getUser().getId().equals(account.getAccountId())) {
+            throw new ServiceException(ServiceExceptionCode.UNAUTHORIZED_ACCESS);
+        }
+
+        // 3. 상품 ID 미리 저장 (삭제 후에는 접근 불가)
+        Long productId = review.getProduct().getId();
+
+        // 4. 리뷰 삭제 (cascade로 ReviewImage도 자동 삭제됨)
+        reviewRepository.delete(review);
+
+        // 5. 삭제 후 상품 평점 업데이트
+        updateProductRating(productId);
+    }
 
     /**
      * 상품 평균 평점 업데이트

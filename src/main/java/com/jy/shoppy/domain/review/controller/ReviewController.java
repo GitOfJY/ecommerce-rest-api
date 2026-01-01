@@ -1,7 +1,6 @@
 package com.jy.shoppy.domain.review.controller;
 
 import com.jy.shoppy.domain.auth.dto.Account;
-import com.jy.shoppy.domain.prodcut.dto.ProductResponse;
 import com.jy.shoppy.domain.review.dto.CreateReviewRequest;
 import com.jy.shoppy.domain.review.dto.CreateReviewResponse;
 import com.jy.shoppy.domain.review.dto.ReviewResponse;
@@ -48,19 +47,23 @@ public class ReviewController {
         return ResponseEntity.ok(ApiResponse.success(reviewService.update(reviewId, req, account), HttpStatus.OK));
     }
 
-    /*
+
     @Operation(
             summary = "리뷰 삭제 API",
             description = "리뷰를 삭제합니다."
     )
     @DeleteMapping("/{reviewId}")
-    public ResponseEntity<ApiResponse<Long>> delete(
+    public ResponseEntity<ApiResponse<String>> delete(
             @PathVariable Long reviewId,
             @AuthenticationPrincipal Account account) {
-        return ResponseEntity.ok(ApiResponse.success(reviewService.delete(reviewId, account)));
+        reviewService.delete(reviewId, account);
+        return ResponseEntity.ok(
+                ApiResponse.success("리뷰가 삭제되었습니다.", HttpStatus.OK)
+        );
     }
 
-        @Operation(
+/*
+    @Operation(
             summary = "작성 가능한 리뷰 목록 API",
             description = "작성 가능한 리뷰 목록을 조회합니다."
     )
@@ -70,5 +73,8 @@ public class ReviewController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(reviewService.getAll(account), HttpStatus.CREATED));
     }
+
+    // 내가 작성한 리뷰 목록 조회
+    // 특정 상품의 리뷰 목록 조회
     */
 }
