@@ -1,5 +1,14 @@
 package com.jy.shoppy.domain.coupon.controller;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@Tag(name = "Coupon ", description = "쿠폰 API")
+@RestController
+@RequestMapping("/api/coupons")
+@RequiredArgsConstructor
 public class CouponController {
     // 쿠폰 대량 발급 API (POST /coupons)
     // - 요청된 발행 개수만큼 중복되지 않는 쿠폰 코드 생성하고 `coupon_user` 테이블에 초기 상태로 저장
