@@ -5,7 +5,6 @@ import com.jy.shoppy.domain.review.service.AdminReviewCommentService;
 import com.jy.shoppy.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -19,7 +18,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/admin/reviews/comments")
 @RequiredArgsConstructor
-@SecurityRequirement(name = "bearerAuth")
 public class AdminReviewCommentController {
     private final AdminReviewCommentService adminCommentService;
 

@@ -31,5 +31,5 @@ public class GradeCouponPolicy {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "coupon_template_id", insertable = false, updatable = false)
-    private CouponTemplate couponTemplate;
+    private Coupon couponTemplate;
 }
