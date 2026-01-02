@@ -71,6 +71,22 @@ public enum ServiceExceptionCode {
     INVALID_FILE_TYPE("지원하지 않는 파일 형식입니다. (jpg, jpeg, png, gif, webp만 가능)", HttpStatus.BAD_REQUEST),
     FILE_TOO_LARGE("파일 크기는 5MB를 초과할 수 없습니다.", HttpStatus.BAD_REQUEST),
 
+    // 쿠폰 관련
+    DUPLICATE_COUPON_NAME("이미 존재하는 쿠폰명입니다.", HttpStatus.CONFLICT),
+    CANNOT_FOUND_COUPON("쿠폰을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    INVALID_COUPON_PERIOD("쿠폰 사용 기간이 아닙니다.", HttpStatus.BAD_REQUEST),
+    EXCEEDED_COUPON_LIMIT("쿠폰 발급 가능 수량을 초과했습니다.", HttpStatus.BAD_REQUEST),
+    INVALID_COUPON_DATE("쿠폰 시작일은 종료일보다 이전이어야 합니다.", HttpStatus.BAD_REQUEST),
+    CANNOT_DELETE_ISSUED_COUPON("이미 발급된 쿠폰은 삭제할 수 없습니다.", HttpStatus.BAD_REQUEST),
+    COUPON_CODE_GENERATION_FAILED("쿠폰 코드 생성에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+
+    // 쿠폰 등록 관련
+    INVALID_COUPON_CODE("유효하지 않은 쿠폰 코드입니다.", HttpStatus.NOT_FOUND),
+    ALREADY_REGISTERED_COUPON("이미 등록된 쿠폰입니다.", HttpStatus.CONFLICT),
+    ALREADY_ASSIGNED_COUPON("이미 다른 사용자에게 할당된 쿠폰입니다.", HttpStatus.CONFLICT),
+    EXPIRED_COUPON("만료된 쿠폰입니다.", HttpStatus.BAD_REQUEST),
+    DUPLICATE_COUPON_REGISTRATION("이미 동일한 쿠폰을 보유하고 있습니다.", HttpStatus.CONFLICT),
+
     // ========== 500 Internal Server Error ==========
     JSON_PROCESSING_ERROR("Json 데이터 처리 중 에러가 발생하였습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
     FILE_UPLOAD_FAILED("파일 업로드에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
