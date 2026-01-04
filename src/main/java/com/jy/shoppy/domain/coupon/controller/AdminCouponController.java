@@ -1,6 +1,7 @@
 package com.jy.shoppy.domain.coupon.controller;
 
 import com.jy.shoppy.domain.coupon.dto.*;
+import com.jy.shoppy.domain.coupon.entity.type.CouponSortType;
 import com.jy.shoppy.domain.coupon.service.CouponService;
 import com.jy.shoppy.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,6 +31,92 @@ public class AdminCouponController {
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
                         .body(ApiResponse.success(couponService.create(req), HttpStatus.CREATED));
+    }
+
+    @Operation(
+            summary = "쿠폰 적용 가능 상품 추가",
+            description = "쿠폰에 적용 가능한 상품을 추가합니다. (applicationType이 PRODUCT인 경우만)"
+    )
+    @PostMapping("/{couponId}/products")
+    public ResponseEntity<ApiResponse<String>> addProducts(
+            @PathVariable Long couponId,
+            @Valid @RequestBody AddCouponProductsRequest request
+    ) {
+        couponService.addProducts(couponId, request);
+        return ResponseEntity.ok(
+                ApiResponse.success("쿠폰 적용 상품이 추가되었습니다.", HttpStatus.OK)
+        );
+    }
+
+    @Operation(
+            summary = "쿠폰 적용 가능 상품 조회",
+            description = "쿠폰에 적용 가능한 상품 목록을 조회합니다."
+    )
+    @GetMapping("/{couponId}/products")
+    public ResponseEntity<ApiResponse<List<CouponProductResponse>>> getCouponProducts(
+            @PathVariable Long couponId
+    ) {
+        return ResponseEntity.ok(
+                ApiResponse.success(couponService.findCouponProducts(couponId), HttpStatus.OK)
+        );
+    }
+
+    @Operation(
+            summary = "쿠폰 적용 가능 상품 삭제",
+            description = "쿠폰에서 특정 상품을 제거합니다."
+    )
+    @DeleteMapping("/{couponId}/products/{productId}")
+    public ResponseEntity<ApiResponse<String>> removeProduct(
+            @PathVariable Long couponId,
+            @PathVariable Long productId
+    ) {
+        couponService.removeProduct(couponId, productId);
+        return ResponseEntity.ok(
+                ApiResponse.success("쿠폰 적용 상품이 삭제되었습니다.", HttpStatus.OK)
+        );
+    }
+
+    @Operation(
+            summary = "쿠폰 적용 가능 카테고리 추가",
+            description = "쿠폰에 적용 가능한 카테고리를 추가합니다. (applicationType이 CATEGORY인 경우만)"
+    )
+    @PostMapping("/{couponId}/categories")
+    public ResponseEntity<ApiResponse<String>> addCategories(
+            @PathVariable Long couponId,
+            @Valid @RequestBody AddCouponCategoriesRequest request
+    ) {
+        couponService.addCategories(couponId, request);
+        return ResponseEntity.ok(
+                ApiResponse.success("쿠폰 적용 카테고리가 추가되었습니다.", HttpStatus.OK)
+        );
+    }
+
+    @Operation(
+            summary = "쿠폰 적용 가능 카테고리 조회",
+            description = "쿠폰에 적용 가능한 카테고리 목록을 조회합니다."
+    )
+    @GetMapping("/{couponId}/categories")
+    public ResponseEntity<ApiResponse<List<CouponCategoryResponse>>> getCouponCategories(
+            @PathVariable Long couponId
+    ) {
+        return ResponseEntity.ok(
+                ApiResponse.success(couponService.findCouponCategories(couponId), HttpStatus.OK)
+        );
+    }
+
+    @Operation(
+            summary = "쿠폰 적용 가능 카테고리 삭제",
+            description = "쿠폰에서 특정 카테고리를 제거합니다."
+    )
+    @DeleteMapping("/{couponId}/categories/{categoryId}")
+    public ResponseEntity<ApiResponse<String>> removeCategory(
+            @PathVariable Long couponId,
+            @PathVariable Long categoryId
+    ) {
+        couponService.removeCategory(couponId, categoryId);
+        return ResponseEntity.ok(
+                ApiResponse.success("쿠폰 적용 카테고리가 삭제되었습니다.", HttpStatus.OK)
+        );
     }
 
     @Operation(
@@ -82,13 +169,15 @@ public class AdminCouponController {
     }
 
     @Operation(
-            summary = "쿠폰 전체 조회",
-            description = "모든 쿠폰을 조회합니다."
+            summary = "쿠폰 전체 조회 (정렬)",
+            description = "모든 쿠폰을 정렬하여 조회합니다. (최신순/할인순/만료임박순)"
     )
     @GetMapping
-    public ResponseEntity<ApiResponse<List<CouponResponse>>> getAllCoupons() {
+    public ResponseEntity<ApiResponse<List<CouponResponse>>> getAllCoupons(
+            @RequestParam(required = false, defaultValue = "LATEST") CouponSortType sortType
+    ) {
         return ResponseEntity.ok(
-                ApiResponse.success(couponService.findAll(), HttpStatus.OK)
+                ApiResponse.success(couponService.findAllSorted(sortType), HttpStatus.OK)
         );
     }
 }

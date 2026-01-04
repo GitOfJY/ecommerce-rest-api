@@ -2,10 +2,7 @@ package com.jy.shoppy.domain.coupon.dto;
 
 
 import com.jy.shoppy.domain.coupon.entity.type.DiscountType;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -22,6 +19,10 @@ public class CreateCouponRequest {
     @NotBlank(message = "쿠폰명은 필수입니다")
     @Size(max = 100, message = "쿠폰명은 100자를 초과할 수 없습니다")
     String name;
+
+    @NotBlank(message = "쿠폰 코드 prefix는 필수입니다")
+    @Pattern(regexp = "^[A-Z0-9]{2,6}$", message = "prefix는 영문 대문자와 숫자 2-6자만 가능합니다")
+    String codePrefix;
 
     @NotNull(message = "할인 타입은 필수입니다")
     DiscountType discountType;

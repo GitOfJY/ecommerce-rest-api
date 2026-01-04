@@ -32,7 +32,7 @@ public class CategoryService {
 
         // 카테고리 부모 id 확인
         if (req.getParentId() != null && !categoryRepository.existsById(req.getParentId())) {
-            throw new ServiceException(ServiceExceptionCode.NOT_FOUND_PARENT_CATEGORY);
+            throw new ServiceException(ServiceExceptionCode.CANNOT_FOUND_PARENT_CATEGORY);
         }
 
         // name, description, parentId
@@ -41,7 +41,7 @@ public class CategoryService {
         // addParentCategory
         if (req.getParentId() != null) {
             Category parentCategory = categoryRepository.findById(req.getParentId())
-                    .orElseThrow(() -> new ServiceException(ServiceExceptionCode.NOT_FOUND_PARENT_CATEGORY));
+                    .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_PARENT_CATEGORY));
             category.addParentCategory(parentCategory);
         }
 
@@ -58,16 +58,16 @@ public class CategoryService {
     public Long update(UpdateCategoryRequest req) {
         // 카테고리 확인
         Category category = categoryRepository.findById(req.getId())
-                .orElseThrow(() -> new ServiceException(ServiceExceptionCode.NOT_FOUND_CATEGORY));
+                .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_CATEGORY));
 
         // 부모 id가 있다면 카테고리 부모 id 확인
         if (req.getParentId() != null && !categoryRepository.existsById(req.getParentId())) {
-            throw new ServiceException(ServiceExceptionCode.NOT_FOUND_PARENT_CATEGORY);
+            throw new ServiceException(ServiceExceptionCode.CANNOT_FOUND_PARENT_CATEGORY);
         }
 
         if (req.getParentId() != null) {
             Category parentCategory = categoryRepository.findById(req.getParentId())
-                    .orElseThrow(() -> new ServiceException(ServiceExceptionCode.NOT_FOUND_CATEGORY));;
+                    .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_CATEGORY));;
             category.updateCategory(req, parentCategory);
         } else {
             category.updateCategory(req, null);
@@ -81,7 +81,7 @@ public class CategoryService {
 
     public void deleteById(Long id) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new ServiceException(ServiceExceptionCode.NOT_FOUND_CATEGORY));
+                .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_CATEGORY));
 
         // 1) 하위 카테고리 존재 여부 체크
         if (!category.getChildren().isEmpty()) {

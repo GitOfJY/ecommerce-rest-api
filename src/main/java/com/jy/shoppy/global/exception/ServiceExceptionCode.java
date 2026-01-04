@@ -30,8 +30,8 @@ public enum ServiceExceptionCode {
     CANNOT_FOUND_USER("존재하지 않는 회원입니다.", HttpStatus.NOT_FOUND),
     CANNOT_FOUND_USER_GRADE("존재하지 않는 등급입니다.", HttpStatus.NOT_FOUND),
     CANNOT_FOUND_PRODUCT("상품을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
-    NOT_FOUND_CATEGORY("카테고리가 존재하지 않습니다.", HttpStatus.NOT_FOUND),
-    NOT_FOUND_PARENT_CATEGORY("상위 카테고리가 존재하지 않습니다.", HttpStatus.NOT_FOUND),
+    CANNOT_FOUND_CATEGORY("카테고리가 존재하지 않습니다.", HttpStatus.NOT_FOUND),
+    CANNOT_FOUND_PARENT_CATEGORY("상위 카테고리가 존재하지 않습니다.", HttpStatus.NOT_FOUND),
     CANNOT_FOUND_ORDER("주문을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     CANNOT_FOUND_REFUND("해당하는 환불건을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     CANNOT_FOUND_CART("해당하는 장바구니를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
@@ -79,13 +79,22 @@ public enum ServiceExceptionCode {
     INVALID_COUPON_DATE("쿠폰 시작일은 종료일보다 이전이어야 합니다.", HttpStatus.BAD_REQUEST),
     CANNOT_DELETE_ISSUED_COUPON("이미 발급된 쿠폰은 삭제할 수 없습니다.", HttpStatus.BAD_REQUEST),
     COUPON_CODE_GENERATION_FAILED("쿠폰 코드 생성에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+    CANNOT_USE_COUPON("사용 불가능한 쿠폰입니다.", HttpStatus.BAD_REQUEST),
 
     // 쿠폰 등록 관련
+    CAN_NOT_REGISTER_COUPON("등록할 수 없는 쿠폰입니다.", HttpStatus.BAD_REQUEST),
     INVALID_COUPON_CODE("유효하지 않은 쿠폰 코드입니다.", HttpStatus.NOT_FOUND),
     ALREADY_REGISTERED_COUPON("이미 등록된 쿠폰입니다.", HttpStatus.CONFLICT),
     ALREADY_ASSIGNED_COUPON("이미 다른 사용자에게 할당된 쿠폰입니다.", HttpStatus.CONFLICT),
+    NOT_ASSIGNED_COUPON("사용자가 할당되지 않은 쿠폰입니다.", HttpStatus.BAD_REQUEST),
     EXPIRED_COUPON("만료된 쿠폰입니다.", HttpStatus.BAD_REQUEST),
     DUPLICATE_COUPON_REGISTRATION("이미 동일한 쿠폰을 보유하고 있습니다.", HttpStatus.CONFLICT),
+
+    // 쿠폰 적용 관련
+    INVALID_COUPON_APPLICATION_TYPE("쿠폰 적용 타입이 올바르지 않습니다.", HttpStatus.BAD_REQUEST),
+    COUPON_PRODUCT_NOT_FOUND("쿠폰 적용 상품을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    COUPON_CATEGORY_NOT_FOUND("쿠폰 적용 카테고리를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    COUPON_NOT_APPLICABLE("이 상품에는 쿠폰을 적용할 수 없습니다.", HttpStatus.BAD_REQUEST),
 
     // ========== 500 Internal Server Error ==========
     JSON_PROCESSING_ERROR("Json 데이터 처리 중 에러가 발생하였습니다.", HttpStatus.INTERNAL_SERVER_ERROR),

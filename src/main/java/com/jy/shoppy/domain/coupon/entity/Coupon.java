@@ -1,13 +1,18 @@
 package com.jy.shoppy.domain.coupon.entity;
 
+import com.jy.shoppy.domain.category.entity.Category;
 import com.jy.shoppy.domain.coupon.dto.CreateCouponRequest;
 import com.jy.shoppy.domain.coupon.dto.UpdateCouponRequest;
+import com.jy.shoppy.domain.coupon.entity.type.CouponApplicationType;
 import com.jy.shoppy.domain.coupon.entity.type.DiscountType;
+import com.jy.shoppy.domain.prodcut.entity.Product;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "coupons")
@@ -24,9 +29,17 @@ public class Coupon {
     @Column(nullable = false, length = 100)
     String name;
 
+    @Column(name = "code_prefix", length = 10)
+    String codePrefix;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "discount_type", nullable = false, length = 20)
     DiscountType discountType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "application_type", nullable = false, length = 20)
+    @Builder.Default
+    CouponApplicationType applicationType = CouponApplicationType.ALL;
 
     @Column(name = "discount_value", nullable = false)
     Integer discountValue;
@@ -64,9 +77,19 @@ public class Coupon {
     @Column(name = "updated_at")
     LocalDateTime updatedAt;
 
+    @OneToMany(mappedBy = "coupon", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    List<CouponProduct> couponProducts = new ArrayList<>();
+
+    @OneToMany(mappedBy = "coupon", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    List<CouponCategory> couponCategories = new ArrayList<>();
+
+
     public static Coupon create(CreateCouponRequest request) {
         return Coupon.builder()
                 .name(request.getName())
+                .codePrefix(request.getCodePrefix())
                 .discountType(request.getDiscountType())
                 .discountValue(request.getDiscountValue())
                 .minOrderAmount(request.getMinOrderAmount() != null ? request.getMinOrderAmount() : 0)
@@ -82,6 +105,7 @@ public class Coupon {
 
     public void update(UpdateCouponRequest request) {
         this.name = request.getName();
+        this.codePrefix = request.getCodePrefix();
         this.discountType = request.getDiscountType();
         this.discountValue = request.getDiscountValue();
         this.minOrderAmount = request.getMinOrderAmount() != null ? request.getMinOrderAmount() : 0;
@@ -170,5 +194,50 @@ public class Coupon {
             return Integer.MAX_VALUE;
         }
         return Math.max(0, usageLimit - issueCount);
+    }
+
+    /**
+     * 특정 상품에 쿠폰 적용 가능한지 확인
+     */
+    public boolean isApplicableToProduct(Long productId, Long categoryId) {
+        return switch (this.applicationType) {
+            case ALL -> true;
+            case PRODUCT -> couponProducts.stream()
+                    .anyMatch(cp -> cp.getProduct().getId().equals(productId));
+            case CATEGORY -> couponCategories.stream()
+                    .anyMatch(cc -> cc.getCategory().getId().equals(categoryId));
+        };
+    }
+
+    /**
+     * 쿠폰 적용 가능 상품 추가
+     */
+    public void addProduct(Product product) {
+        if (this.applicationType != CouponApplicationType.PRODUCT) {
+            throw new IllegalStateException("상품별 쿠폰이 아닙니다.");
+        }
+
+        CouponProduct couponProduct = CouponProduct.builder()
+                .coupon(this)
+                .product(product)
+                .build();
+
+        this.couponProducts.add(couponProduct);
+    }
+
+    /**
+     * 쿠폰 적용 가능 카테고리 추가
+     */
+    public void addCategory(Category category) {
+        if (this.applicationType != CouponApplicationType.CATEGORY) {
+            throw new IllegalStateException("카테고리별 쿠폰이 아닙니다.");
+        }
+
+        CouponCategory couponCategory = CouponCategory.builder()
+                .coupon(this)
+                .category(category)
+                .build();
+
+        this.couponCategories.add(couponCategory);
     }
 }
