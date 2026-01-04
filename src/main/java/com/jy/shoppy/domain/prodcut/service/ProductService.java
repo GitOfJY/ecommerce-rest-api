@@ -67,7 +67,7 @@ public class ProductService {
         if (req.getCategoryIds() != null && !req.getCategoryIds().isEmpty()) {
             List<Category> categories = categoryRepository.findAllById(req.getCategoryIds());
             if (categories.size() != req.getCategoryIds().size()) {
-                throw new ServiceException(ServiceExceptionCode.NOT_FOUND_CATEGORY);
+                throw new ServiceException(ServiceExceptionCode.CANNOT_FOUND_CATEGORY);
             }
 
             for (Category category : categories) {
@@ -266,7 +266,7 @@ public class ProductService {
         // 카테고리 조회 및 검증
         List<Category> categories = categoryRepository.findAllById(categoryIds);
         if (categories.size() != categoryIds.size()) {
-            throw new ServiceException(ServiceExceptionCode.NOT_FOUND_CATEGORY);
+            throw new ServiceException(ServiceExceptionCode.CANNOT_FOUND_CATEGORY);
         }
 
         // 기존 제거 후 새로 추가

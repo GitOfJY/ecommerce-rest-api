@@ -1,13 +1,23 @@
 package com.jy.shoppy.domain.coupon.service;
 
+import com.jy.shoppy.domain.auth.dto.Account;
+import com.jy.shoppy.domain.category.entity.Category;
+import com.jy.shoppy.domain.category.repository.CategoryRepository;
 import com.jy.shoppy.domain.coupon.dto.*;
 import com.jy.shoppy.domain.coupon.entity.Coupon;
+import com.jy.shoppy.domain.coupon.entity.CouponCategory;
+import com.jy.shoppy.domain.coupon.entity.CouponProduct;
 import com.jy.shoppy.domain.coupon.entity.CouponUser;
+import com.jy.shoppy.domain.coupon.entity.type.CouponApplicationType;
+import com.jy.shoppy.domain.coupon.entity.type.CouponSortType;
 import com.jy.shoppy.domain.coupon.entity.type.CouponStatus;
 import com.jy.shoppy.domain.coupon.mapper.CouponMapper;
-import com.jy.shoppy.domain.coupon.repository.CouponRepository;
-import com.jy.shoppy.domain.coupon.repository.CouponUserRepository;
+import com.jy.shoppy.domain.coupon.repository.*;
 import com.jy.shoppy.domain.coupon.util.CouponCodeGenerator;
+import com.jy.shoppy.domain.prodcut.entity.Product;
+import com.jy.shoppy.domain.prodcut.repository.ProductRepository;
+import com.jy.shoppy.domain.user.entity.User;
+import com.jy.shoppy.domain.user.repository.UserRepository;
 import com.jy.shoppy.global.exception.ServiceException;
 import com.jy.shoppy.global.exception.ServiceExceptionCode;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +37,13 @@ import java.util.stream.Collectors;
 public class CouponService {
     private final CouponRepository couponRepository;
     private final CouponUserRepository couponUserRepository;
+    private final UserRepository userRepository;
+    private final ProductRepository productRepository;
+    private final CategoryRepository categoryRepository;
+    private final CouponProductRepository couponProductRepository;
+    private final CouponCategoryRepository couponCategoryRepository;
+    private final CouponQueryRepository couponQueryRepository;
+    private final CouponUserQueryRepository couponUserQueryRepository;
     private final CouponMapper couponMapper;
 
     /**
@@ -48,6 +65,125 @@ public class CouponService {
 
         return couponMapper.toCouponResponse(coupon);
     }
+
+    /**
+     * 쿠폰에 적용 가능한 상품 추가
+     */
+    @Transactional
+    public void addProducts(Long couponId, AddCouponProductsRequest request) {
+        Coupon coupon = couponRepository.findById(couponId)
+                .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_COUPON));
+
+        if (coupon.getApplicationType() != CouponApplicationType.PRODUCT) {
+            throw new ServiceException(ServiceExceptionCode.INVALID_COUPON_APPLICATION_TYPE);
+        }
+
+        List<Product> products = productRepository.findAllById(request.getProductIds());
+
+        if (products.size() != request.getProductIds().size()) {
+            throw new ServiceException(ServiceExceptionCode.CANNOT_FOUND_PRODUCT);
+        }
+
+        for (Product product : products) {
+            if (!couponProductRepository.existsByCouponIdAndProductId(couponId, product.getId())) {
+                coupon.addProduct(product);
+            }
+        }
+    }
+
+    /**
+     * 쿠폰에 적용 가능한 카테고리 추가
+     */
+    @Transactional
+    public void addCategories(Long couponId, AddCouponCategoriesRequest request) {
+        Coupon coupon = couponRepository.findById(couponId)
+                .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_COUPON));
+
+        if (coupon.getApplicationType() != CouponApplicationType.CATEGORY) {
+            throw new ServiceException(ServiceExceptionCode.INVALID_COUPON_APPLICATION_TYPE);
+        }
+
+        List<Category> categories = categoryRepository.findAllById(request.getCategoryIds());
+
+        if (categories.size() != request.getCategoryIds().size()) {
+            throw new ServiceException(ServiceExceptionCode.CANNOT_FOUND_CATEGORY);
+        }
+
+        for (Category category : categories) {
+            if (!couponCategoryRepository.existsByCouponIdAndCategoryId(couponId, category.getId())) {
+                coupon.addCategory(category);
+            }
+        }
+    }
+
+    /**
+     * 쿠폰 적용 가능 상품 목록 조회
+     */
+    public List<CouponProductResponse> findCouponProducts(Long couponId) {
+        Coupon coupon = couponRepository.findById(couponId)
+                .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_COUPON));
+
+        if (coupon.getApplicationType() != CouponApplicationType.PRODUCT) {
+            throw new ServiceException(ServiceExceptionCode.INVALID_COUPON_APPLICATION_TYPE);
+        }
+
+        List<CouponProduct> couponProducts = couponProductRepository.findByCouponIdWithProduct(couponId);
+
+        return couponProducts.stream()
+                .map(cp -> CouponProductResponse.builder()
+                        .productId(cp.getProduct().getId())
+                        .productName(cp.getProduct().getName())
+                        .price(cp.getProduct().getPrice())
+                        .imageUrl(cp.getProduct().getThumbnailUrl())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 쿠폰 적용 가능 카테고리 목록 조회
+     */
+    public List<CouponCategoryResponse> findCouponCategories(Long couponId) {
+        Coupon coupon = couponRepository.findById(couponId)
+                .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_COUPON));
+
+        if (coupon.getApplicationType() != CouponApplicationType.CATEGORY) {
+            throw new ServiceException(ServiceExceptionCode.INVALID_COUPON_APPLICATION_TYPE);
+        }
+
+        List<CouponCategory> couponCategories = couponCategoryRepository.findByCouponIdWithCategory(couponId);
+
+        return couponCategories.stream()
+                .map(cc -> CouponCategoryResponse.builder()
+                        .categoryId(cc.getCategory().getId())
+                        .categoryName(cc.getCategory().getName())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 쿠폰 적용 가능 상품 삭제
+     */
+    @Transactional
+    public void removeProduct(Long couponId, Long productId) {
+        if (!couponProductRepository.existsByCouponIdAndProductId(couponId, productId)) {
+            throw new ServiceException(ServiceExceptionCode.COUPON_PRODUCT_NOT_FOUND);
+        }
+
+        couponProductRepository.deleteByCouponIdAndProductId(couponId, productId);
+    }
+
+    /**
+     * 쿠폰 적용 가능 카테고리 삭제
+     */
+    @Transactional
+    public void removeCategory(Long couponId, Long categoryId) {
+        if (!couponCategoryRepository.existsByCouponIdAndCategoryId(couponId, categoryId)) {
+            throw new ServiceException(ServiceExceptionCode.COUPON_CATEGORY_NOT_FOUND);
+        }
+
+        couponCategoryRepository.deleteByCouponIdAndCategoryId(couponId, categoryId);
+    }
+
     /**
      * 쿠폰 대량 발급
      */
@@ -100,6 +236,7 @@ public class CouponService {
                         throw new ServiceException(ServiceExceptionCode.DUPLICATE_COUPON_NAME);
                     }
                 });
+
         // 3. 날짜 유효성 검증
         validateUpdateCouponDates(request);
 
@@ -109,9 +246,9 @@ public class CouponService {
         return couponMapper.toCouponResponse(coupon);
     }
 
-        /**
-         * 쿠폰 삭제
-         */
+    /**
+     * 쿠폰 삭제
+     */
     @Transactional
     public void delete(Long couponId) {
         Coupon coupon = couponRepository.findById(couponId)
@@ -135,12 +272,34 @@ public class CouponService {
     }
 
     /**
-     * 쿠폰 전체 조회
+     * 쿠폰 전체 조회 (정렬)
      */
-    public List<CouponResponse> findAll() {
-        return couponRepository.findAll().stream()
+    public List<CouponResponse> findAllSorted(CouponSortType sortType) {
+        List<Coupon> coupons = couponQueryRepository.findAllSorted(sortType);
+
+        return coupons.stream()
                 .map(couponMapper::toCouponResponse)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 사용자의 모든 쿠폰 조회 (정렬)
+     */
+    public List<UserCouponResponse> findAllByUserId(Account account, CouponSortType sortType) {
+        Long userId = account.getAccountId();
+        List<CouponUser> couponUsers = couponUserQueryRepository.findAllByUserIdSorted(userId, sortType);
+
+        return couponMapper.toUserCouponResponseList(couponUsers);
+    }
+
+    /**
+     * 사용자의 사용 가능한 쿠폰만 조회 (정렬)
+     */
+    public List<UserCouponResponse> findAvailableByUserId(Account account, CouponSortType sortType) {
+        Long userId = account.getAccountId();
+        List<CouponUser> couponUsers = couponUserQueryRepository.findAvailableByUserIdSorted(userId, sortType);
+
+        return couponMapper.toUserCouponResponseList(couponUsers);
     }
 
     /**
@@ -172,8 +331,7 @@ public class CouponService {
         List<CouponUser> couponUsers = new ArrayList<>();
         Set<String> existingCodes = new HashSet<>();
 
-        // 쿠폰명 앞 6자를 prefix로 사용 (한글 제외)
-        String prefix = extractPrefix(coupon.getName());
+        String prefix = coupon.getCodePrefix();
 
         for (int i = 0; i < quantity; i++) {
             String code = generateUniqueCouponCode(prefix, existingCodes);
@@ -212,22 +370,27 @@ public class CouponService {
     }
 
     /**
-     * 쿠폰명에서 prefix 추출 (영문/숫자만, 최대 6자)
+     * 쿠폰 등록
      */
-    private String extractPrefix(String name) {
-        if (name == null || name.isEmpty()) {
-            return "COUPON";
-        }
+    @Transactional
+    public RegisterCouponResponse registerCoupon(String couponCode, Account account) {
+        // 1. 비관적 락으로 조회 (다른 트랜잭션이 접근 불가)
+        CouponUser couponUser = couponUserRepository.findByCodeWithCouponForUpdate(couponCode)
+                .orElseThrow(() -> new ServiceException(ServiceExceptionCode.INVALID_COUPON_CODE));
 
-        // 영문/숫자만 추출
-        String alphanumeric = name.replaceAll("[^A-Za-z0-9]", "").toUpperCase();
+        Long userId = account.getAccountId();
 
-        if (alphanumeric.isEmpty()) {
-            return "COUPON";
-        }
+        // 2. 유효성 검증
+        validateCouponRegistration(couponUser, userId);
 
-        // 최대 6자까지만 사용
-        return alphanumeric.length() > 6 ? alphanumeric.substring(0, 6) : alphanumeric;
+        // 3. 사용자 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_USER));
+
+        // 4. 쿠폰 등록
+        couponUser.assignToUser(user);
+
+        return couponMapper.toRegisterCouponResponse(couponUser);
     }
 
     /**

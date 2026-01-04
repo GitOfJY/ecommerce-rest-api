@@ -2,6 +2,8 @@ package com.jy.shoppy.domain.coupon.entity;
 
 import com.jy.shoppy.domain.coupon.entity.type.CouponStatus;
 import com.jy.shoppy.domain.user.entity.User;
+import com.jy.shoppy.global.exception.ServiceException;
+import com.jy.shoppy.global.exception.ServiceExceptionCode;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -60,12 +62,14 @@ public class CouponUser {
      */
     public void assignToUser(User user) {
         if (this.user != null) {
-            throw new IllegalStateException("이미 할당된 쿠폰입니다.");
+            throw new ServiceException(ServiceExceptionCode.ALREADY_REGISTERED_COUPON);
         }
         if (!isAvailable()) {
-            throw new IllegalStateException("할당할 수 없는 쿠폰입니다.");
+            throw new ServiceException(ServiceExceptionCode.CAN_NOT_REGISTER_COUPON);
         }
+
         this.user = user;
+        this.status = CouponStatus.ISSUED;
     }
 
     /**
@@ -73,14 +77,14 @@ public class CouponUser {
      */
     public void use(Long orderId) {
         if (this.status != CouponStatus.AVAILABLE) {
-            throw new IllegalStateException("사용 불가능한 쿠폰입니다. 현재 상태: " + this.status);
+            throw new ServiceException(ServiceExceptionCode.CANNOT_USE_COUPON);
         }
         if (LocalDateTime.now().isAfter(this.expiresAt)) {
             this.status = CouponStatus.EXPIRED;
-            throw new IllegalStateException("만료된 쿠폰입니다.");
+            throw new ServiceException(ServiceExceptionCode.EXPIRED_COUPON);
         }
         if (this.user == null) {
-            throw new IllegalStateException("사용자가 할당되지 않은 쿠폰입니다.");
+            throw new ServiceException(ServiceExceptionCode.NOT_ASSIGNED_COUPON);
         }
 
         this.status = CouponStatus.USED;
@@ -95,6 +99,13 @@ public class CouponUser {
         if (this.status == CouponStatus.AVAILABLE) {
             this.status = CouponStatus.EXPIRED;
         }
+    }
+
+    /**
+     * 쿠폰 만료 여부
+     */
+    public boolean isExpired() {
+        return LocalDateTime.now().isAfter(this.expiresAt);
     }
 
     /**
