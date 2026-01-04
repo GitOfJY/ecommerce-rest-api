@@ -98,6 +98,10 @@ public enum ServiceExceptionCode {
     CANNOT_FOUND_COUPON_USER("쿠폰 사용자 정보를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     FORBIDDEN_COUPON_ACCESS("다른 사용자의 쿠폰에 접근할 수 없습니다.", HttpStatus.FORBIDDEN),
 
+    // 쿠폰 사용 관련
+    COUPON_NOT_AVAILABLE("사용할 수 없는 쿠폰입니다.", HttpStatus.BAD_REQUEST),
+    MINIMUM_ORDER_AMOUNT_NOT_MET("최소 주문 금액을 충족하지 않습니다.", HttpStatus.BAD_REQUEST),
+
     // ========== 500 Internal Server Error ==========
     JSON_PROCESSING_ERROR("Json 데이터 처리 중 에러가 발생하였습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
     FILE_UPLOAD_FAILED("파일 업로드에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),

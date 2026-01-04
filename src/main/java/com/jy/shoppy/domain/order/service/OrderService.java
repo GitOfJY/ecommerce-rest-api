@@ -2,6 +2,8 @@ package com.jy.shoppy.domain.order.service;
 
 import com.jy.shoppy.domain.auth.dto.Account;
 import com.jy.shoppy.domain.address.entity.DeliveryAddress;
+import com.jy.shoppy.domain.coupon.dto.CouponDiscountResponse;
+import com.jy.shoppy.domain.coupon.service.CouponService;
 import com.jy.shoppy.domain.guest.entity.Guest;
 import com.jy.shoppy.domain.guest.repository.GuestRepository;
 import com.jy.shoppy.domain.order.dto.*;
@@ -41,6 +43,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Slf4j
 public class OrderService {
+    private final CouponService couponService;
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
@@ -69,7 +72,7 @@ public class OrderService {
             deliveryAddressRepository.save(deliveryAddress);
         }
 
-        return createOrderInternal(user, null, req.getProducts(), deliveryAddress);
+        return createOrderInternal(account, user, null, req.getProducts(), deliveryAddress, req.getCouponUserId());
     }
 
     @Transactional
@@ -84,16 +87,20 @@ public class OrderService {
         Guest guest = Guest.createGuest(req, encodedPassword);
         guestRepository.save(guest);
 
-        return createOrderInternal(null, guest, req.getProducts(), null);
+        return createOrderInternal(null, null, guest, req.getProducts(), null, null);
     }
 
-    private OrderResponse createOrderInternal(User user, Guest guest, List<OrderProductRequest> products, DeliveryAddress deliveryAddress) {
+    private OrderResponse createOrderInternal(Account account, User user, Guest guest, List<OrderProductRequest> products, DeliveryAddress deliveryAddress, Long couponUserId) {
         List<OrderProduct> orderProducts = new ArrayList<>();
 
+        // 1. 회원 등급 할인율 조회
         BigDecimal discountRate = BigDecimal.ZERO;
         if (user != null && user.getUserGrade() != null) {
             discountRate = user.getUserGrade().getDiscountRate();
         }
+
+        // 2. 주문 상품 생성 및 금액 계산
+        BigDecimal totalAmount = BigDecimal.ZERO;
 
         for (OrderProductRequest item : products) {
             // 1. 상품 조회
@@ -124,22 +131,77 @@ public class OrderService {
                     item.getQuantity()
             );
             orderProducts.add(orderProduct);
+
+            // 총 금액 계산
+            BigDecimal itemTotal = discountedPrice.multiply(BigDecimal.valueOf(item.getQuantity()));
+            totalAmount = totalAmount.add(itemTotal);
         }
 
-        // 주문번호 생성
+        // 3. 쿠폰 할인 계산
+        BigDecimal couponDiscount = BigDecimal.ZERO;
+        if (couponUserId != null && account != null) {
+            // 쿠폰 할인 금액 계산 (CouponService 호출)
+            couponDiscount = calculateCouponDiscount(account, couponUserId, products, totalAmount);
+        }
+
+        // 4. 최종 금액 = 총 금액 - 쿠폰 할인
+        BigDecimal finalAmount = totalAmount.subtract(couponDiscount);
+
+        // 5. 주문번호 생성
         String orderNumber = generateOrderNumber();
 
-        // 주문 생성
+        // 6. 주문 생성
         Order order = Order.createOrder(
                 user,
                 guest,
-                deliveryAddress,     // 배송지 (비회원이면 null)
+                deliveryAddress,
                 orderProducts,
-                orderNumber
+                orderNumber,
+                couponUserId,
+                couponDiscount
         );
         orderRepository.save(order);
 
+        // 7. 쿠폰 사용 처리
+        if (couponUserId != null && account != null) {
+            couponService.useCoupon(couponUserId, order.getId(), account);
+            log.info("쿠폰 사용 완료 - 주문ID: {}, 쿠폰ID: {}, 할인금액: {}",
+                    order.getId(), couponUserId, couponDiscount);
+        }
+
         return orderMapper.toResponse(order);
+    }
+
+    /**
+     * 쿠폰 할인 금액 계산
+     */
+    private BigDecimal calculateCouponDiscount(
+            Account account,
+            Long couponUserId,
+            List<OrderProductRequest> products,
+            BigDecimal totalAmount
+    ) {
+        try {
+            // OrderProductsRequest 생성
+            OrderProductsRequest request = new OrderProductsRequest(products);
+
+            // 쿠폰 할인 계산
+            CouponDiscountResponse response = couponService.calculateCouponDiscount(
+                    couponUserId,
+                    request,
+                    account
+            );
+
+            // 쿠폰 적용 가능 여부 확인
+            if (!response.getIsApplicable()) {
+                throw new ServiceException(ServiceExceptionCode.COUPON_NOT_APPLICABLE);
+            }
+            return response.getDiscountAmount();
+
+        } catch (ServiceException e) {
+            log.error("쿠폰 할인 계산 실패 - 쿠폰ID: {}, 사유: {}", couponUserId, e.getMessage());
+            throw e;
+        }
     }
 
     // 등급 할인율 적용
@@ -193,8 +255,14 @@ public class OrderService {
         // 재고 복구
         order.getOrderProducts().forEach(this::restoreStock);
 
+        // 쿠폰 복구 (사용한 쿠폰이 있다면)
+        if (order.getCouponUserId() != null) {
+            couponService.restoreCoupon(order.getCouponUserId());  // 완성됨!
+        }
+
         // 주문 취소
         order.cancel();
+
         return orderMapper.toResponse(order);
     }
 

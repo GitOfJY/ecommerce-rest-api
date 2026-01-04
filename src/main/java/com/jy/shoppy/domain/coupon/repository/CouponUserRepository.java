@@ -43,6 +43,13 @@ public interface CouponUserRepository extends JpaRepository<CouponUser, Long> {
     Optional<CouponUser> findByCodeWithCouponForUpdate(@Param("code") String code);
 
     /**
+     * ID로 조회 (비관적 락)
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT cu FROM CouponUser cu JOIN FETCH cu.coupon WHERE cu.id = :id")
+    Optional<CouponUser> findByIdWithCouponForUpdate(@Param("id") Long id);
+
+    /**
      * ID로 조회 (Coupon과 조인)
      */
     @Query("SELECT cu FROM CouponUser cu JOIN FETCH cu.coupon WHERE cu.id = :id")

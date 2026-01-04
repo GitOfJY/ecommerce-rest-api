@@ -57,6 +57,12 @@ public class Order {
 
     private BigDecimal totalPrice;
 
+    @Column(name = "coupon_user_id")
+    private Long couponUserId;
+
+    @Column(name = "coupon_discount", precision = 13, scale = 2)
+    private BigDecimal couponDiscount;
+
     public void addOrderProduct(OrderProduct orderProduct) {
         orderProducts.add(orderProduct);
         orderProduct.assignOrder(this);
@@ -67,7 +73,10 @@ public class Order {
                                     Guest guest,
                                     DeliveryAddress deliveryAddress,
                                     List<OrderProduct> orderProducts,
-                                    String orderNumber) {
+                                    String orderNumber,
+                                    Long couponUserId,
+                                    BigDecimal couponDiscount
+                                    ) {
         if (user == null && guest == null) {
             throw new IllegalArgumentException("주문자 정보가 필요합니다");
         }
@@ -85,6 +94,8 @@ public class Order {
                 .status(OrderStatus.PENDING)
                 .orderDate(LocalDateTime.now())
                 .deliveryAddress(deliveryAddress)
+                .couponUserId(couponUserId)
+                .couponDiscount(couponDiscount != null ? couponDiscount : BigDecimal.ZERO)
                 .build();
 
         for (OrderProduct orderProduct : orderProducts) {
@@ -106,6 +117,15 @@ public class Order {
             totalPrice = totalPrice.add(orderProduct.getTotalPrice());
         }
         return totalPrice;
+    }
+
+    /**
+     * 최종 결제 금액 (쿠폰 할인 적용 후)
+     */
+    public BigDecimal getFinalPrice() {
+        BigDecimal total = getTotalPrice();
+        BigDecimal discount = couponDiscount != null ? couponDiscount : BigDecimal.ZERO;
+        return total.subtract(discount);
     }
 
     // 주문 취소

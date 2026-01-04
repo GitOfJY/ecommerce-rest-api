@@ -48,4 +48,6 @@ public class CreateMemberOrderRequest {
 
     @Schema(description = "상세 주소 (새 배송지)", example = "101동 202호")
     private String detail;
+
+    private Long couponUserId;
 }

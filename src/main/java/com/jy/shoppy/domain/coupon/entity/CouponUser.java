@@ -8,6 +8,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -102,26 +103,26 @@ public class CouponUser {
     }
 
     /**
-     * 쿠폰 만료 여부
+     * 만료 여부 확인
      */
     public boolean isExpired() {
         return LocalDateTime.now().isAfter(this.expiresAt);
     }
 
     /**
-     * 쿠폰 사용 가능 여부
+     * 쿠폰 사용 가능 여부 (status + 만료 확인)
      */
     public boolean isAvailable() {
-        return this.status == CouponStatus.AVAILABLE
+        return this.status == CouponStatus.ISSUED
                 && LocalDateTime.now().isBefore(this.expiresAt);
     }
 
     /**
      * 할인 금액 계산
      */
-    public int calculateDiscount(int orderAmount) {
+    public BigDecimal calculateDiscount(BigDecimal orderAmount) {
         if (!isAvailable()) {
-            return 0;
+            return BigDecimal.ZERO;
         }
         return coupon.calculateDiscount(orderAmount);
     }
@@ -131,5 +132,14 @@ public class CouponUser {
      */
     public boolean isOwnedBy(Long userId) {
         return this.user != null && this.user.getId().equals(userId);
+    }
+
+    /**
+     * 쿠폰 복구 (주문 취소 시)
+     */
+    public void restore() {
+        this.status = CouponStatus.ISSUED;
+        this.usedAt = null;
+        this.orderId = null;
     }
 }

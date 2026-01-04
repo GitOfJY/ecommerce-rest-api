@@ -1,14 +1,14 @@
 package com.jy.shoppy.domain.coupon.controller;
 
 import com.jy.shoppy.domain.auth.dto.Account;
-import com.jy.shoppy.domain.coupon.dto.CouponApplicableProductsResponse;
-import com.jy.shoppy.domain.coupon.dto.RegisterCouponResponse;
-import com.jy.shoppy.domain.coupon.dto.UserCouponResponse;
+import com.jy.shoppy.domain.coupon.dto.*;
 import com.jy.shoppy.domain.coupon.entity.type.CouponSortType;
 import com.jy.shoppy.domain.coupon.service.CouponService;
+import com.jy.shoppy.domain.order.dto.OrderProductsRequest;
 import com.jy.shoppy.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -103,6 +103,54 @@ public class CouponController {
     ) {
         return ResponseEntity.ok(
                 ApiResponse.success(couponService.findApplicableCouponsForProduct(productId, account), HttpStatus.OK)
+        );
+    }
+
+    @Operation(
+            summary = "결제 전 최대 할인 쿠폰 계산",
+            description = "주문 상품에 대해 사용 가능한 쿠폰 중 최대 할인 쿠폰을 계산합니다."
+    )
+    @PostMapping("/calculate-max-discount")
+    public ResponseEntity<ApiResponse<MaxDiscountCouponResponse>> calculateMaxDiscount(
+            @Valid @RequestBody OrderProductsRequest request,
+            @AuthenticationPrincipal Account account
+    ) {
+        return ResponseEntity.ok(
+                ApiResponse.success(couponService.calculateMaxDiscount(request, account), HttpStatus.OK)
+        );
+    }
+
+    @Operation(
+            summary = "특정 쿠폰의 할인 금액 계산",
+            description = "선택한 쿠폰으로 얼마나 할인되는지 미리 계산합니다."
+    )
+    @PostMapping("/{couponUserId}/calculate-discount")
+    public ResponseEntity<ApiResponse<CouponDiscountResponse>> calculateDiscount(
+            @PathVariable Long couponUserId,
+            @Valid @RequestBody OrderProductsRequest request,
+            @AuthenticationPrincipal Account account
+    ) {
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        couponService.calculateCouponDiscount(couponUserId, request, account),
+                        HttpStatus.OK
+                )
+        );
+    }
+
+    @Operation(
+            summary = "쿠폰 사용 처리",
+            description = "주문 완료 시 쿠폰을 사용 처리합니다. (주문 서비스에서 호출)"
+    )
+    @PostMapping("/{couponUserId}/use")
+    public ResponseEntity<ApiResponse<Void>> useCoupon(
+            @PathVariable Long couponUserId,
+            @RequestParam Long orderId,
+            @AuthenticationPrincipal Account account
+    ) {
+        couponService.useCoupon(couponUserId, orderId, account);
+        return ResponseEntity.ok(
+                ApiResponse.success(null, HttpStatus.OK)
         );
     }
 }

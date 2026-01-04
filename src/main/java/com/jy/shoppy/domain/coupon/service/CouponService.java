@@ -14,21 +14,26 @@ import com.jy.shoppy.domain.coupon.entity.type.CouponStatus;
 import com.jy.shoppy.domain.coupon.mapper.CouponMapper;
 import com.jy.shoppy.domain.coupon.repository.*;
 import com.jy.shoppy.domain.coupon.util.CouponCodeGenerator;
+import com.jy.shoppy.domain.order.dto.OrderProductsRequest;
+import com.jy.shoppy.domain.prodcut.dto.OrderProductRequest;
 import com.jy.shoppy.domain.prodcut.entity.Product;
+import com.jy.shoppy.domain.prodcut.entity.ProductOption;
+import com.jy.shoppy.domain.prodcut.repository.ProductOptionRepository;
 import com.jy.shoppy.domain.prodcut.repository.ProductRepository;
 import com.jy.shoppy.domain.user.entity.User;
 import com.jy.shoppy.domain.user.repository.UserRepository;
 import com.jy.shoppy.global.exception.ServiceException;
 import com.jy.shoppy.global.exception.ServiceExceptionCode;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -44,6 +49,7 @@ public class CouponService {
     private final CouponCategoryRepository couponCategoryRepository;
     private final CouponQueryRepository couponQueryRepository;
     private final CouponUserQueryRepository couponUserQueryRepository;
+    private final ProductOptionRepository productOptionRepository;
     private final CouponMapper couponMapper;
 
     /**
@@ -342,7 +348,7 @@ public class CouponService {
                 .products(getApplicableProducts(coupon))
                 .categories(getApplicableCategories(coupon))
                 .build();
-        }
+    }
 
     /**
      * 특정 상품에 적용 가능한 내 쿠폰 조회 (장바구니/주문 시 사용)
@@ -405,6 +411,7 @@ public class CouponService {
                         .build())
                 .collect(Collectors.toList());
     }
+
     /**
      * 특정 상품에 쿠폰 적용 가능한지 확인
      */
@@ -557,6 +564,240 @@ public class CouponService {
         );
         if (alreadyHas) {
             throw new ServiceException(ServiceExceptionCode.DUPLICATE_COUPON_REGISTRATION);
+        }
+    }
+
+    /**
+     * 결제 전 최대 할인 쿠폰 계산
+     */
+    public MaxDiscountCouponResponse calculateMaxDiscount(OrderProductsRequest request, Account account) {
+        Long userId = account.getAccountId();
+
+        // 1. 상품 정보 조회 및 총 금액 계산
+        OrderCalculation calculation = calculateOrderAmount(request);
+
+        // 2. 내 사용 가능한 쿠폰 조회 (할인순)
+        List<CouponUser> myCoupons = couponUserQueryRepository.findAvailableByUserIdSorted(
+                userId,
+                CouponSortType.DISCOUNT_DESC
+        );
+
+        // 3. 각 쿠폰별 할인 금액 계산
+        List<CouponDiscountResponse> applicableCoupons = myCoupons.stream()
+                .map(couponUser -> calculateCouponDiscount(
+                        couponUser,
+                        calculation.getProducts(),
+                        calculation.getTotalAmount()
+                ))
+                .filter(CouponDiscountResponse::getIsApplicable)
+                .sorted((a, b) -> b.getDiscountAmount().compareTo(a.getDiscountAmount()))
+                .collect(Collectors.toList());
+
+        // 4. 최대 할인 쿠폰 선택
+        CouponDiscountResponse bestCoupon = applicableCoupons.isEmpty()
+                ? null
+                : applicableCoupons.get(0);
+
+        BigDecimal maxDiscountAmount = bestCoupon != null
+                ? bestCoupon.getDiscountAmount()
+                : BigDecimal.ZERO;
+
+        BigDecimal finalAmount = calculation.getTotalAmount().subtract(maxDiscountAmount);
+
+        return MaxDiscountCouponResponse.builder()
+                .totalAmount(calculation.getTotalAmount())
+                .maxDiscountAmount(maxDiscountAmount)
+                .finalAmount(finalAmount)
+                .bestCoupon(bestCoupon)
+                .applicableCoupons(applicableCoupons)
+                .build();
+    }
+
+    /**
+     * 특정 쿠폰의 할인 금액 계산
+     */
+    public CouponDiscountResponse calculateCouponDiscount(Long couponUserId, OrderProductsRequest request, Account account) {
+        // 1. 쿠폰 조회
+        CouponUser couponUser = couponUserRepository.findByIdWithCoupon(couponUserId)
+                .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_COUPON_USER));
+
+        // 2. 본인 쿠폰인지 확인
+        if (!couponUser.getUser().getId().equals(account.getAccountId())) {
+            throw new ServiceException(ServiceExceptionCode.FORBIDDEN_COUPON_ACCESS);
+        }
+
+        // 3. 주문 금액 계산
+        OrderCalculation calculation = calculateOrderAmount(request);
+
+        // 4. 할인 금액 계산
+        return calculateCouponDiscount(
+                couponUser,
+                calculation.getProducts(),
+                calculation.getTotalAmount()
+        );
+    }
+
+    /**
+     * 주문 금액 계산 (상품 + 옵션 가격)
+     */
+    private OrderCalculation calculateOrderAmount(OrderProductsRequest request) {
+        List<OrderProductRequest> orderProducts = request.getProducts();
+
+        // 1. 상품 ID 추출
+        List<Long> productIds = orderProducts.stream()
+                .map(OrderProductRequest::getProductId)
+                .collect(Collectors.toList());
+
+        // 2. 상품 조회
+        Map<Long, Product> productMap = productRepository.findAllById(productIds)
+                .stream()
+                .collect(Collectors.toMap(Product::getId, p -> p));
+
+        if (productMap.size() != productIds.size()) {
+            throw new ServiceException(ServiceExceptionCode.CANNOT_FOUND_PRODUCT);
+        }
+
+        // 3. 총 금액 계산 (옵션 가격 포함)
+        BigDecimal totalAmount = BigDecimal.ZERO;
+        List<Product> products = new ArrayList<>();
+
+        for (OrderProductRequest item : orderProducts) {
+            Product product = productMap.get(item.getProductId());
+            products.add(product);
+            BigDecimal quantity = BigDecimal.valueOf(item.getQuantity());
+
+            // 옵션이 있는 경우
+            if (item.getColor() != null || item.getSize() != null) {
+                ProductOption option = productOptionRepository
+                        .findByProductIdAndColorAndSize(
+                                item.getProductId(),
+                                item.getColor(),
+                                item.getSize()
+                        )
+                        .orElseThrow(() -> new ServiceException(ServiceExceptionCode.INVALID_PRODUCT_OPTION));
+
+                // 옵션 가격 = 기본 가격 + 추가 가격
+                BigDecimal basePrice = product.getPrice();
+                BigDecimal additionalPrice = option.getAdditionalPrice();
+                BigDecimal optionPrice = basePrice.add(additionalPrice);
+
+                // 옵션 가격 * 수량
+                BigDecimal itemTotal = optionPrice.multiply(quantity);
+
+                // 총액에 더하기
+                totalAmount = totalAmount.add(itemTotal);
+            } else {
+                // 옵션 없는 경우 기본 가격
+                BigDecimal itemPrice = product.getPrice();
+                BigDecimal itemTotal = itemPrice.multiply(quantity);
+
+                totalAmount = totalAmount.add(itemTotal);
+            }
+        }
+
+        return new OrderCalculation(products, totalAmount);
+    }
+
+    /**
+     * 주문 시 쿠폰 사용 처리
+     */
+    @Transactional
+    public void useCoupon(Long couponUserId, Long orderId, Account account) {
+        // 1. 쿠폰 조회 (비관적 락)
+        CouponUser couponUser = couponUserRepository.findByIdWithCouponForUpdate(couponUserId)
+                .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_COUPON_USER));
+
+        // 2. 본인 쿠폰인지 확인
+        if (!couponUser.getUser().getId().equals(account.getAccountId())) {
+            throw new ServiceException(ServiceExceptionCode.FORBIDDEN_COUPON_ACCESS);
+        }
+
+        // 3. 사용 가능 상태 확인
+        if (couponUser.getStatus() != CouponStatus.ISSUED) {
+            throw new ServiceException(ServiceExceptionCode.COUPON_NOT_AVAILABLE);
+        }
+
+        if (couponUser.isExpired()) {
+            couponUser.expire();
+            throw new ServiceException(ServiceExceptionCode.EXPIRED_COUPON);
+        }
+
+        // 4. 쿠폰 사용 처리
+        couponUser.use(orderId);
+
+        // 5. 쿠폰 템플릿의 사용 수 증가
+        Coupon coupon = couponUser.getCoupon();
+        coupon.increaseUsedCount();
+    }
+
+    /**
+     * 쿠폰별 할인 금액 계산 (내부 로직)
+     */
+    private CouponDiscountResponse calculateCouponDiscount(
+            CouponUser couponUser,
+            List<Product> products,
+            BigDecimal totalAmount
+    ) {
+        Coupon coupon = couponUser.getCoupon();
+
+        // 1. 적용 가능 여부 확인
+        if (!couponUser.isAvailable()) {
+            return CouponDiscountResponse.notApplicable(
+                    couponUser,
+                    totalAmount,
+                    "사용할 수 없는 쿠폰입니다"
+            );
+        }
+
+        // 2. 최소 주문 금액 확인
+        if (coupon.getMinOrderAmount() != null) {
+            BigDecimal minAmount = BigDecimal.valueOf(coupon.getMinOrderAmount());
+
+            if (totalAmount.compareTo(minAmount) < 0) {
+                return CouponDiscountResponse.notApplicable(
+                        couponUser,
+                        totalAmount,
+                        String.format("최소 주문 금액 %,d원 이상이어야 합니다", coupon.getMinOrderAmount())
+                );
+            }
+        }
+
+        // 3. 상품 적용 가능 여부 확인
+        boolean isApplicable = products.stream()
+                .anyMatch(product -> isApplicableToProduct(coupon, product));
+
+        if (!isApplicable) {
+            return CouponDiscountResponse.notApplicable(
+                    couponUser,
+                    totalAmount,
+                    "해당 상품에는 적용할 수 없는 쿠폰입니다"
+            );
+        }
+
+        // 4. 할인 금액 계산
+        BigDecimal discountAmount = coupon.calculateDiscount(totalAmount);
+        return CouponDiscountResponse.applicable(
+                couponUser,
+                totalAmount,
+                discountAmount
+        );
+    }
+
+    /**
+     * 쿠폰 복구 (주문 취소 시)
+     */
+    @Transactional
+    public void restoreCoupon(Long couponUserId) {
+        CouponUser couponUser = couponUserRepository.findById(couponUserId)
+                .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_COUPON_USER));
+
+        // USED → ISSUED로 변경
+        if (couponUser.getStatus() == CouponStatus.USED) {
+            couponUser.restore();
+
+            // 쿠폰 사용 수 감소
+            Coupon coupon = couponUser.getCoupon();
+            coupon.decreaseUsedCount();
         }
     }
 }
