@@ -303,6 +303,138 @@ public class CouponService {
     }
 
     /**
+     * 쿠폰 코드로 적용 가능한 상품 조회 (등록 전)
+     */
+    public CouponApplicableProductsResponse findApplicableProductsByCouponCode(String couponCode) {
+        CouponUser couponUser = couponUserRepository.findByCodeWithCoupon(couponCode)
+                .orElseThrow(() -> new ServiceException(ServiceExceptionCode.INVALID_COUPON_CODE));
+
+        Coupon coupon = couponUser.getCoupon();
+
+        return CouponApplicableProductsResponse.builder()
+                .couponCode(couponCode)
+                .couponName(coupon.getName())
+                .applicationType(coupon.getApplicationType())
+                .applicationTypeDescription(coupon.getApplicationType().getDescription())
+                .products(getApplicableProducts(coupon))
+                .categories(getApplicableCategories(coupon))
+                .build();
+    }
+
+    /**
+     * 내가 등록한 쿠폰의 적용 가능한 상품 조회
+     */
+    public CouponApplicableProductsResponse findMyApplicableProducts(Long couponUserId, Account account) {
+        CouponUser couponUser = couponUserRepository.findByIdWithCoupon(couponUserId)
+                .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_COUPON_USER));
+
+        // 본인 쿠폰인지 확인
+        if (!couponUser.getUser().getId().equals(account.getAccountId())) {
+            throw new ServiceException(ServiceExceptionCode.FORBIDDEN_COUPON_ACCESS);
+        }
+
+        Coupon coupon = couponUser.getCoupon();
+        return CouponApplicableProductsResponse.builder()
+                .couponCode(couponUser.getCode())
+                .couponName(coupon.getName())
+                .applicationType(coupon.getApplicationType())
+                .applicationTypeDescription(coupon.getApplicationType().getDescription())
+                .products(getApplicableProducts(coupon))
+                .categories(getApplicableCategories(coupon))
+                .build();
+        }
+
+    /**
+     * 특정 상품에 적용 가능한 내 쿠폰 조회 (장바구니/주문 시 사용)
+     */
+    public List<UserCouponResponse> findApplicableCouponsForProduct(Long productId, Account account) {
+        // 상품 조회
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_PRODUCT));
+
+        Long userId = account.getAccountId();
+
+        // 내 사용 가능한 쿠폰 조회
+        List<CouponUser> myCoupons = couponUserQueryRepository.findAvailableByUserIdSorted(
+                userId,
+                CouponSortType.DISCOUNT_DESC
+        );
+
+        // 해당 상품에 적용 가능한 쿠폰만 필터링
+        List<CouponUser> applicableCoupons = myCoupons.stream()
+                .filter(cu -> isApplicableToProduct(cu.getCoupon(), product))
+                .collect(Collectors.toList());
+
+        return couponMapper.toUserCouponResponseList(applicableCoupons);
+    }
+
+    /**
+     * 쿠폰의 적용 가능 상품 목록 조회
+     */
+    private List<CouponProductResponse> getApplicableProducts(Coupon coupon) {
+        if (coupon.getApplicationType() != CouponApplicationType.PRODUCT) {
+            return List.of();
+        }
+
+        List<CouponProduct> couponProducts = couponProductRepository.findByCouponIdWithProduct(coupon.getId());
+
+        return couponProducts.stream()
+                .map(cp -> CouponProductResponse.builder()
+                        .productId(cp.getProduct().getId())
+                        .productName(cp.getProduct().getName())
+                        .price(cp.getProduct().getPrice())
+                        .imageUrl(cp.getProduct().getThumbnailUrl())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 쿠폰의 적용 가능 카테고리 목록 조회
+     */
+    private List<CouponCategoryResponse> getApplicableCategories(Coupon coupon) {
+        if (coupon.getApplicationType() != CouponApplicationType.CATEGORY) {
+            return List.of();
+        }
+
+        List<CouponCategory> couponCategories = couponCategoryRepository.findByCouponIdWithCategory(coupon.getId());
+
+        return couponCategories.stream()
+                .map(cc -> CouponCategoryResponse.builder()
+                        .categoryId(cc.getCategory().getId())
+                        .categoryName(cc.getCategory().getName())
+                        .build())
+                .collect(Collectors.toList());
+    }
+    /**
+     * 특정 상품에 쿠폰 적용 가능한지 확인
+     */
+    private boolean isApplicableToProduct(Coupon coupon, Product product) {
+        return switch (coupon.getApplicationType()) {
+            case ALL -> true;
+            case PRODUCT -> couponProductRepository.existsByCouponIdAndProductId(
+                    coupon.getId(),
+                    product.getId()
+            );
+            case CATEGORY -> {
+                // 상품의 카테고리 ID 추출
+                List<Long> productCategoryIds = product.getCategoryProducts().stream()
+                        .map(cp -> cp.getCategory().getId())
+                        .collect(Collectors.toList());
+
+                // 쿠폰의 카테고리 ID 추출
+                List<Long> couponCategoryIds = couponCategoryRepository.findByCouponIdWithCategory(coupon.getId())
+                        .stream()
+                        .map(cc -> cc.getCategory().getId())
+                        .collect(Collectors.toList());
+
+                // 교집합이 있으면 적용 가능
+                yield productCategoryIds.stream()
+                        .anyMatch(couponCategoryIds::contains);
+            }
+        };
+    }
+
+    /**
      * 쿠폰 생성 시 날짜 유효성 검증
      */
     private void validateCouponDates(CreateCouponRequest request) {

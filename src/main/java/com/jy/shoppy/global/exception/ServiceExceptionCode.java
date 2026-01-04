@@ -95,6 +95,8 @@ public enum ServiceExceptionCode {
     COUPON_PRODUCT_NOT_FOUND("쿠폰 적용 상품을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     COUPON_CATEGORY_NOT_FOUND("쿠폰 적용 카테고리를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     COUPON_NOT_APPLICABLE("이 상품에는 쿠폰을 적용할 수 없습니다.", HttpStatus.BAD_REQUEST),
+    CANNOT_FOUND_COUPON_USER("쿠폰 사용자 정보를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    FORBIDDEN_COUPON_ACCESS("다른 사용자의 쿠폰에 접근할 수 없습니다.", HttpStatus.FORBIDDEN),
 
     // ========== 500 Internal Server Error ==========
     JSON_PROCESSING_ERROR("Json 데이터 처리 중 에러가 발생하였습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
