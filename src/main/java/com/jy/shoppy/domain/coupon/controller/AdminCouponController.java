@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Tag(name = "관리자 쿠폰 관리", description = "관리자 쿠폰 생성/발급/관리 API")
+@Tag(name = "Admin Coupon", description = "관리자 쿠폰 생성/발급/관리 API")
 @RestController
 @RequestMapping("/api/admin/coupons")
 @RequiredArgsConstructor

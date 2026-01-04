@@ -10,6 +10,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -130,20 +132,33 @@ public class Coupon {
     /**
      * 할인 금액 계산
      */
-    public int calculateDiscount(int orderAmount) {
-        // 최소 주문 금액 체크
-        if (orderAmount < minOrderAmount) {
-            return 0;
+    public BigDecimal calculateDiscount(BigDecimal orderAmount) {
+        BigDecimal discount;
+
+        if (this.discountType == DiscountType.FIXED) {
+            // 정액 할인
+            discount = BigDecimal.valueOf(this.discountValue);
+        } else {
+            // 퍼센트 할인 (10% → 0.10)
+            BigDecimal percentage = BigDecimal.valueOf(this.discountValue)
+                    .divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
+
+            // 총액 * 할인율
+            discount = orderAmount.multiply(percentage);
+
+            // 최대 할인 금액 제한
+            if (this.maxDiscountAmount != null) {
+                BigDecimal maxDiscount = BigDecimal.valueOf(this.maxDiscountAmount);
+
+                // 계산된 할인액이 최대 할인액보다 크면 최대 할인액 적용
+                if (discount.compareTo(maxDiscount) > 0) {
+                    discount = maxDiscount;
+                }
+            }
         }
 
-        int discount = discountType.calculateDiscount(orderAmount, discountValue, maxDiscountAmount);
-
-        // 할인 금액이 주문 금액보다 클 수 없음
-        if (discount > orderAmount) {
-            discount = orderAmount;
-        }
-
-        return discount;
+        // 원 단위로 내림 (소수점 제거)
+        return discount.setScale(0, RoundingMode.DOWN);
     }
 
     /**
@@ -239,5 +254,14 @@ public class Coupon {
                 .build();
 
         this.couponCategories.add(couponCategory);
+    }
+
+    /**
+     * 쿠폰 사용 수 감소 (주문 취소 시)
+     */
+    public void decreaseUsedCount() {
+        if (this.usedCount > 0) {
+            this.usedCount--;
+        }
     }
 }
