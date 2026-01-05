@@ -44,27 +44,50 @@ public class SecurityConfig {
         http
                 .securityMatcher("/api/**")
                 .authorizeHttpRequests(auth -> auth
+                        // ===== Public 경로 =====
                         .requestMatchers(SECURITY_EXCLUDE_PATHS).permitAll()
-                        // 인증, 상품,카테고리, 리뷰, 댓글 조회 - 누구나 가능
+
+                        // ===== 인증 API =====
                         .requestMatchers("/api/auth/**").permitAll()
+
+                        // ===== 상품 조회 - 누구나 =====
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                         .requestMatchers("/api/category/**").permitAll()
+
+                        // ===== 리뷰 조회 - 누구나 =====
                         .requestMatchers(HttpMethod.GET, "/api/reviews/product/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/reviews/*/comments").permitAll()
-                        // Redis 재적재 (개발용) - 임시 허용
+
+                        // ===== Redis 재적재 (개발용) =====
                         .requestMatchers(HttpMethod.POST, "/api/products/redis/reload").permitAll()
-                        // 주문 - 비회원 주문 허용
+
+                        // ===== 주문 - 비회원 주문 허용 =====
                         .requestMatchers(HttpMethod.POST, "/api/orders/guest").permitAll()
-                        .requestMatchers("/api/orders/**").authenticated()
-                        // 나머지 리뷰 API - 인증 필요
-                        .requestMatchers("/api/reviews/**").authenticated()
-                        // 이메일/비밀번호 찾기
+                        .requestMatchers(HttpMethod.GET, "/api/orders/guest").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/orders/guest/cancel").permitAll()
+
+                        // ===== 쿠폰 - 코드 등록은 인증 필요
+                        .requestMatchers(HttpMethod.GET, "/api/coupons/code/**").permitAll()  // 쿠폰 코드 조회
+                        .requestMatchers(HttpMethod.POST, "/api/coupons/**").authenticated()  // 쿠폰 등록
+                        .requestMatchers(HttpMethod.GET, "/api/coupons/**").authenticated()   // 내 쿠폰 조회
+
+                        // ===== 이메일/비밀번호 찾기 =====
                         .requestMatchers(HttpMethod.POST, "/api/users/find-email").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users/reset-password").permitAll()
-                        // 관리자 API - ADMIN 권한 필요
+
+                        // ===== 관리자 API - ADMIN 권한 필요 =====
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
                         // ===== 이미지 업로드 - 관리자만 =====
                         .requestMatchers("/api/upload/**").hasRole("ADMIN")
+
+                        // ===== 주문 - 인증 필요 =====
+                        .requestMatchers("/api/orders/**").authenticated()
+
+                        // ===== 리뷰 작성/수정/삭제 - 인증 필요 =====
+                        .requestMatchers("/api/reviews/**").authenticated()
+
+                        // ===== 나머지 모두 인증 필요 =====
                         .anyRequest().authenticated()
                 )
                 .csrf(AbstractHttpConfigurer::disable)

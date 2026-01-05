@@ -24,14 +24,11 @@ import com.jy.shoppy.domain.user.entity.User;
 import com.jy.shoppy.domain.user.repository.UserRepository;
 import com.jy.shoppy.global.exception.ServiceException;
 import com.jy.shoppy.global.exception.ServiceExceptionCode;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -446,7 +443,8 @@ public class CouponService {
      */
     private void validateCouponDates(CreateCouponRequest request) {
         if (request.getStartDate() != null && request.getEndDate() != null) {
-            if (request.getStartDate().isAfter(request.getEndDate())) {
+            if (request.getStartDate().isAfter(request.getEndDate())
+            || request.getEndDate().isBefore(LocalDateTime.now())) {
                 throw new ServiceException(ServiceExceptionCode.INVALID_COUPON_DATE);
             }
         }
