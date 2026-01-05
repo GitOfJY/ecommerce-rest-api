@@ -102,6 +102,11 @@ public enum ServiceExceptionCode {
     COUPON_NOT_AVAILABLE("사용할 수 없는 쿠폰입니다.", HttpStatus.BAD_REQUEST),
     MINIMUM_ORDER_AMOUNT_NOT_MET("최소 주문 금액을 충족하지 않습니다.", HttpStatus.BAD_REQUEST),
 
+    // 적립금 관련
+    INSUFFICIENT_POINTS("보유 적립금이 부족합니다.", HttpStatus.BAD_REQUEST),
+    POINTS_MINIMUM_USE("적립금은 최소 1,000원 이상 사용 가능합니다.", HttpStatus.BAD_REQUEST),
+    POINTS_EXCEED_LIMIT("적립금은 결제 금액의 50%까지만 사용 가능합니다.", HttpStatus.BAD_REQUEST),
+
     // ========== 500 Internal Server Error ==========
     JSON_PROCESSING_ERROR("Json 데이터 처리 중 에러가 발생하였습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
     FILE_UPLOAD_FAILED("파일 업로드에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
