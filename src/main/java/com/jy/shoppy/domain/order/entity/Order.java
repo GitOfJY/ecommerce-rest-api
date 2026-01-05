@@ -63,6 +63,9 @@ public class Order {
     @Column(name = "coupon_discount", precision = 13, scale = 2)
     private BigDecimal couponDiscount;
 
+    @Column(name = "points_used")
+    private Integer pointsUsed;
+
     public void addOrderProduct(OrderProduct orderProduct) {
         orderProducts.add(orderProduct);
         orderProduct.assignOrder(this);
@@ -75,7 +78,8 @@ public class Order {
                                     List<OrderProduct> orderProducts,
                                     String orderNumber,
                                     Long couponUserId,
-                                    BigDecimal couponDiscount
+                                    BigDecimal couponDiscount,
+                                    Integer pointsUsed
                                     ) {
         if (user == null && guest == null) {
             throw new IllegalArgumentException("주문자 정보가 필요합니다");
@@ -96,6 +100,7 @@ public class Order {
                 .deliveryAddress(deliveryAddress)
                 .couponUserId(couponUserId)
                 .couponDiscount(couponDiscount != null ? couponDiscount : BigDecimal.ZERO)
+                .pointsUsed(pointsUsed != null ? pointsUsed : 0)
                 .build();
 
         for (OrderProduct orderProduct : orderProducts) {
@@ -124,8 +129,9 @@ public class Order {
      */
     public BigDecimal getFinalPrice() {
         BigDecimal total = getTotalPrice();
-        BigDecimal discount = couponDiscount != null ? couponDiscount : BigDecimal.ZERO;
-        return total.subtract(discount);
+        BigDecimal couponDisc = couponDiscount != null ? couponDiscount : BigDecimal.ZERO;
+        BigDecimal pointDisc = pointsUsed != null ? BigDecimal.valueOf(pointsUsed) : BigDecimal.ZERO;
+        return total.subtract(couponDisc).subtract(pointDisc);
     }
 
     // 주문 취소

@@ -92,6 +92,7 @@ public class Coupon {
         return Coupon.builder()
                 .name(request.getName())
                 .codePrefix(request.getCodePrefix())
+                .applicationType(request.getApplicationType())
                 .discountType(request.getDiscountType())
                 .discountValue(request.getDiscountValue())
                 .minOrderAmount(request.getMinOrderAmount() != null ? request.getMinOrderAmount() : 0)
@@ -108,6 +109,7 @@ public class Coupon {
     public void update(UpdateCouponRequest request) {
         this.name = request.getName();
         this.codePrefix = request.getCodePrefix();
+        this.applicationType = request.getApplicationType();
         this.discountType = request.getDiscountType();
         this.discountValue = request.getDiscountValue();
         this.minOrderAmount = request.getMinOrderAmount() != null ? request.getMinOrderAmount() : 0;

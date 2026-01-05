@@ -68,6 +68,40 @@ public class User {
     @Column(name = "withdrawn_at")
     private LocalDateTime withdrawnAt;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer points = 0;
+
+    /**
+     * 적립금 추가
+     */
+    public void addPoints(int amount) {
+        if (amount < 0) {
+            throw new IllegalArgumentException("적립금은 0 이상이어야 합니다");
+        }
+        this.points += amount;
+    }
+
+    /**
+     * 적립금 사용
+     */
+    public void usePoints(int amount) {
+        if (amount < 0) {
+            throw new IllegalArgumentException("사용 금액은 0 이상이어야 합니다");
+        }
+        if (this.points < amount) {
+            throw new IllegalArgumentException("보유 적립금이 부족합니다");
+        }
+        this.points -= amount;
+    }
+
+    /**
+     * 적립금 충분 여부 확인
+     */
+    public boolean hasEnoughPoints(int amount) {
+        return this.points >= amount;
+    }
+
     public void updateUser(UpdateUserRequest req) {
         this.passwordHash = req.getPasswordHash();
         this.email = req.getEmail();

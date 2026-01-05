@@ -1,5 +1,6 @@
 package com.jy.shoppy.domain.coupon.dto;
 
+import com.jy.shoppy.domain.coupon.entity.type.CouponApplicationType;
 import com.jy.shoppy.domain.coupon.entity.type.DiscountType;
 import jakarta.validation.constraints.*;
 import lombok.AccessLevel;
@@ -22,6 +23,9 @@ public class UpdateCouponRequest {
     @NotBlank(message = "쿠폰 코드 prefix는 필수입니다")
     @Pattern(regexp = "^[A-Z0-9]{2,6}$", message = "prefix는 영문 대문자와 숫자 2-6자만 가능합니다")
     String codePrefix;
+
+    @NotNull(message = "적용 타입은 필수입니다")
+    CouponApplicationType applicationType;
 
     @NotNull(message = "할인 타입은 필수입니다")
     DiscountType discountType;

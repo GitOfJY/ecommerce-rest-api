@@ -50,4 +50,6 @@ public class CreateMemberOrderRequest {
     private String detail;
 
     private Long couponUserId;
+
+    private Integer usePoints;
 }

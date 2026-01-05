@@ -7,6 +7,7 @@ import com.jy.shoppy.global.exception.ServiceExceptionCode;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -17,6 +18,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CouponUser {
     @Id
@@ -24,7 +26,7 @@ public class CouponUser {
     Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = true)
     User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -62,22 +64,33 @@ public class CouponUser {
      * 사용자에게 쿠폰 할당
      */
     public void assignToUser(User user) {
+        // 1. 이미 할당된 쿠폰인지 확인
         if (this.user != null) {
             throw new ServiceException(ServiceExceptionCode.ALREADY_REGISTERED_COUPON);
         }
-        if (!isAvailable()) {
-            throw new ServiceException(ServiceExceptionCode.CAN_NOT_REGISTER_COUPON);
+
+        // 2. 등록 가능한 상태인지 확인 (AVAILABLE이어야 함)
+        if (this.status != CouponStatus.AVAILABLE) {
+            throw new ServiceException(ServiceExceptionCode.ALREADY_REGISTERED_COUPON);
         }
 
+        // 3. 만료 확인
+        if (isExpired()) {
+            this.status = CouponStatus.EXPIRED;
+            throw new ServiceException(ServiceExceptionCode.EXPIRED_COUPON);
+        }
+
+        // 4. 쿠폰 할당
         this.user = user;
         this.status = CouponStatus.ISSUED;
+        this.issuedAt = LocalDateTime.now();
     }
 
     /**
      * 쿠폰 사용
      */
     public void use(Long orderId) {
-        if (this.status != CouponStatus.AVAILABLE) {
+        if (this.status != CouponStatus.ISSUED) {
             throw new ServiceException(ServiceExceptionCode.CANNOT_USE_COUPON);
         }
         if (LocalDateTime.now().isAfter(this.expiresAt)) {
@@ -110,11 +123,12 @@ public class CouponUser {
     }
 
     /**
-     * 쿠폰 사용 가능 여부 (status + 만료 확인)
+     * 쿠폰 사용 가능 여부 (주문에 적용 가능한지)
+     * ISSUED 상태이고 만료되지 않은 경우에만 true
      */
     public boolean isAvailable() {
         return this.status == CouponStatus.ISSUED
-                && LocalDateTime.now().isBefore(this.expiresAt);
+                && !isExpired();
     }
 
     /**

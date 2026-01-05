@@ -10,6 +10,8 @@ import com.jy.shoppy.domain.order.dto.*;
 import com.jy.shoppy.domain.order.entity.Order;
 import com.jy.shoppy.domain.order.entity.OrderProduct;
 import com.jy.shoppy.domain.address.repository.DeliveryAddressRepository;
+import com.jy.shoppy.domain.order.entity.type.OrderStatus;
+import com.jy.shoppy.domain.point.service.PointService;
 import com.jy.shoppy.domain.prodcut.entity.Product;
 import com.jy.shoppy.domain.prodcut.entity.ProductOption;
 import com.jy.shoppy.domain.prodcut.repository.ProductOptionRepository;
@@ -44,6 +46,7 @@ import java.util.UUID;
 @Slf4j
 public class OrderService {
     private final CouponService couponService;
+    private final PointService pointService;
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
@@ -72,7 +75,7 @@ public class OrderService {
             deliveryAddressRepository.save(deliveryAddress);
         }
 
-        return createOrderInternal(account, user, null, req.getProducts(), deliveryAddress, req.getCouponUserId());
+        return createOrderInternal(account, user, null, req.getProducts(), deliveryAddress, req.getCouponUserId(), req.getUsePoints());
     }
 
     @Transactional
@@ -87,10 +90,10 @@ public class OrderService {
         Guest guest = Guest.createGuest(req, encodedPassword);
         guestRepository.save(guest);
 
-        return createOrderInternal(null, null, guest, req.getProducts(), null, null);
+        return createOrderInternal(null, null, guest, req.getProducts(), null, null, 0);
     }
 
-    private OrderResponse createOrderInternal(Account account, User user, Guest guest, List<OrderProductRequest> products, DeliveryAddress deliveryAddress, Long couponUserId) {
+    private OrderResponse createOrderInternal(Account account, User user, Guest guest, List<OrderProductRequest> products, DeliveryAddress deliveryAddress, Long couponUserId, Integer usePoints) {
         List<OrderProduct> orderProducts = new ArrayList<>();
 
         // 1. 회원 등급 할인율 조회
@@ -141,16 +144,43 @@ public class OrderService {
         BigDecimal couponDiscount = BigDecimal.ZERO;
         if (couponUserId != null && account != null) {
             // 쿠폰 할인 금액 계산 (CouponService 호출)
-            couponDiscount = calculateCouponDiscount(account, couponUserId, products, totalAmount);
+            couponDiscount = calculateCouponDiscount(account, couponUserId, products);
         }
 
-        // 4. 최종 금액 = 총 금액 - 쿠폰 할인
-        BigDecimal finalAmount = totalAmount.subtract(couponDiscount);
+        // 4. 적립금 사용 검증 및 차감
+        int pointsUsed = 0;
+        if (usePoints != null && usePoints > 0 && user != null) {
+            pointsUsed = usePoints;
 
-        // 5. 주문번호 생성
+            // 4-1. 보유 적립금 확인
+            if (!user.hasEnoughPoints(pointsUsed)) {
+                throw new ServiceException(ServiceExceptionCode.INSUFFICIENT_POINTS);
+            }
+
+            // 4-2. 최소 사용 금액 체크 (예: 1,000원 이상)
+            if (pointsUsed < 1000) {
+                throw new ServiceException(ServiceExceptionCode.POINTS_MINIMUM_USE);
+            }
+
+            // 4-3. 최대 사용 금액 체크 (총 금액의 50% 이하)
+            BigDecimal maxPoints = totalAmount.subtract(couponDiscount)
+                    .multiply(new BigDecimal("0.5"))
+                    .setScale(0, BigDecimal.ROUND_DOWN);
+
+            if (pointsUsed > maxPoints.intValue()) {
+                throw new ServiceException(ServiceExceptionCode.POINTS_EXCEED_LIMIT);
+            }
+        }
+
+        // 5. 최종 금액 = 총 금액 - 쿠폰 할인 - 적립금 사용
+        BigDecimal finalAmount = totalAmount
+                .subtract(couponDiscount)
+                .subtract(BigDecimal.valueOf(pointsUsed));
+
+        // 6. 주문번호 생성
         String orderNumber = generateOrderNumber();
 
-        // 6. 주문 생성
+        // 7. 주문 생성
         Order order = Order.createOrder(
                 user,
                 guest,
@@ -158,15 +188,51 @@ public class OrderService {
                 orderProducts,
                 orderNumber,
                 couponUserId,
-                couponDiscount
+                couponDiscount,
+                pointsUsed
         );
+
         orderRepository.save(order);
 
-        // 7. 쿠폰 사용 처리
+        // 8. 쿠폰 사용 처리
         if (couponUserId != null && account != null) {
             couponService.useCoupon(couponUserId, order.getId(), account);
             log.info("쿠폰 사용 완료 - 주문ID: {}, 쿠폰ID: {}, 할인금액: {}",
                     order.getId(), couponUserId, couponDiscount);
+        }
+
+        // 9. 적립금 사용 처리
+        if (pointsUsed > 0 && user != null) {
+            pointService.usePoints(user, order, pointsUsed);
+            log.info("적립금 사용 완료 - 주문ID: {}, 사용자ID: {}, 사용금액: {}원",
+                    order.getId(), user.getId(), pointsUsed);
+        }
+
+        return orderMapper.toResponse(order);
+    }
+
+    /**
+     * 주문 완료 처리 (결제 완료 후)
+     */
+    @Transactional
+    public OrderResponse completeOrder(Account account, Long orderId) {
+        // 1. 주문 조회
+        Order order = orderRepository.findByIdAndUserId(orderId, account.getAccountId())
+                .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_ORDER));
+
+        // 2. 이미 완료된 주문인지 확인
+        if (order.getStatus() == OrderStatus.COMPLETED) {
+            throw new ServiceException(ServiceExceptionCode.ALREADY_COMPLETED_ORDER);
+        }
+
+        // 3. 주문 상태를 COMPLETED로 변경
+        order.complete();
+
+        // 4. 적립금 지급
+        if (order.getUser() != null) {
+            User user = order.getUser();
+            pointService.earnPoints(user, order);
+            log.info("적립금 지급 완료 - 주문ID: {}, 사용자ID: {}", order.getId(), user.getId());
         }
 
         return orderMapper.toResponse(order);
@@ -178,8 +244,7 @@ public class OrderService {
     private BigDecimal calculateCouponDiscount(
             Account account,
             Long couponUserId,
-            List<OrderProductRequest> products,
-            BigDecimal totalAmount
+            List<OrderProductRequest> products
     ) {
         try {
             // OrderProductsRequest 생성
@@ -248,19 +313,38 @@ public class OrderService {
 
     @Transactional
     public OrderResponse cancelMyOrder(Account account, Long orderId) {
-        // 주문 조회
+        // 1. 주문 조회
         Order order = orderRepository.findByIdAndUserId(orderId, account.getAccountId())
                 .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_ORDER));
 
-        // 재고 복구
+        // 2. 재고 복구
         order.getOrderProducts().forEach(this::restoreStock);
 
-        // 쿠폰 복구 (사용한 쿠폰이 있다면)
+        // 3. 쿠폰 복구
         if (order.getCouponUserId() != null) {
-            couponService.restoreCoupon(order.getCouponUserId());  // 완성됨!
+            couponService.restoreCoupon(order.getCouponUserId());
+            log.info("쿠폰 복구 완료 - 주문ID: {}", order.getId());
         }
 
-        // 주문 취소
+        // 4. 적립금 복구
+        if (order.getUser() != null) {
+            User user = order.getUser();
+
+            // 4-1. 사용한 적립금 반환
+            if (order.getPointsUsed() != null && order.getPointsUsed() > 0) {
+                pointService.restoreUsedPoints(user, order, order.getPointsUsed());
+                log.info("사용 적립금 반환 완료 - 주문ID: {}, 반환금액: {}원",
+                        order.getId(), order.getPointsUsed());
+            }
+
+            // 4-2. 적립받은 적립금 회수 (주문 완료된 경우만)
+            if (order.getStatus() == OrderStatus.COMPLETED) {
+                pointService.cancelEarnedPoints(user, order);
+                log.info("적립금 회수 완료 - 주문ID: {}", order.getId());
+            }
+        }
+
+        // 5. 주문 취소
         order.cancel();
 
         return orderMapper.toResponse(order);
