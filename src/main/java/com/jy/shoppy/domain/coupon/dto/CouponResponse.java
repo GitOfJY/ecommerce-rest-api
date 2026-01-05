@@ -1,5 +1,6 @@
 package com.jy.shoppy.domain.coupon.dto;
 
+import com.jy.shoppy.domain.coupon.entity.type.CouponApplicationType;
 import com.jy.shoppy.domain.coupon.entity.type.DiscountType;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -16,6 +17,7 @@ import java.time.LocalDateTime;
 public class CouponResponse {
     Long id;
     String name;
+    CouponApplicationType applicationType;
     DiscountType discountType;
     String discountTypeDescription;
     Integer discountValue;
