@@ -86,4 +86,26 @@ public class CartController {
         cartService.clearCart(account, session);
         return ResponseEntity.ok(ApiResponse.success());
     }
+
+    @Operation(
+            summary = "장바구니 결제 정보 조회 API",
+            description = """
+                    장바구니의 모든 혜택 정보를 조회합니다. (회원 전용)
+                    - 상품 총액
+                    - 회원 등급 할인
+                    - 최대 쿠폰 할인
+                    - 적립 예정 포인트
+                    - 최종 결제 금액
+                    """
+    )
+    @GetMapping("/summary")
+    public ResponseEntity<ApiResponse<CartSummaryResponse>> getCartSummary(
+            @AuthenticationPrincipal Account account) {
+        if (account == null) {
+            return ApiResponse.error("UNAUTHORIZED", "로그인이 필요한 서비스입니다");
+        }
+
+        CartSummaryResponse response = cartService.getCartSummary(account);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
 }

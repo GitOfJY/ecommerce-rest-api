@@ -26,7 +26,6 @@ public enum ServiceExceptionCode {
     FORBIDDEN_CART_ACCESS("본인의 장바구니만 접근할 수 있습니다.", HttpStatus.FORBIDDEN),
 
     // ========== 404 Not Found (리소스 없음) ==========
-    USER_NOT_FOUND("존재하지 않는 사용자입니다.", HttpStatus.NOT_FOUND),
     CANNOT_FOUND_USER("존재하지 않는 회원입니다.", HttpStatus.NOT_FOUND),
     CANNOT_FOUND_USER_GRADE("존재하지 않는 등급입니다.", HttpStatus.NOT_FOUND),
     CANNOT_FOUND_PRODUCT("상품을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
@@ -40,6 +39,7 @@ public enum ServiceExceptionCode {
     CANNOT_FOUND_DELIVERY_ADDRESS("해당하는 주소를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     CANNOT_FOUND_REVIEW("리뷰를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     CANNOT_FOUND_COMMENT("댓글을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    CANNOT_FOUND_ORDER_USER("주문자 정보가 없습니다", HttpStatus.NOT_FOUND),
 
     // ========== 409 Conflict (중복, 충돌) ==========
     DUPLICATE_USER_EMAIL("이미 가입된 이메일입니다.", HttpStatus.CONFLICT),
@@ -63,6 +63,7 @@ public enum ServiceExceptionCode {
     CANNOT_DELETE_ORDER_NOT_PENDING("PENDING 상태의 주문만 취소할 수 있습니다.", HttpStatus.BAD_REQUEST),
     CANNOT_REQUEST_REFUND_NOT_COMPLETED("COMPLETED 상태의 주문만 환불 요청이 가능합니다.", HttpStatus.BAD_REQUEST),
     DELIVERY_ADDRESS_INFO_REQUIRED("배송지 입력은 필수입니다.", HttpStatus.BAD_REQUEST),
+    DELIVERY_ADDRESS_INFO_REQUIRED_FOR_USER("회원 주문은 배송지 입력은 필수입니다.", HttpStatus.BAD_REQUEST),
     NOT_GUEST_ORDER("비회원 주문이 아닙니다.", HttpStatus.BAD_REQUEST),
     GUEST_ORDER_NOT_MATCH("주문자 정보가 일치하지 않습니다.", HttpStatus.BAD_REQUEST),
     CANNOT_REVIEW_NOT_COMPLETED("완료된 주문만 리뷰 작성이 가능합니다.", HttpStatus.BAD_REQUEST),
@@ -70,6 +71,7 @@ public enum ServiceExceptionCode {
     EMPTY_FILE("업로드할 파일이 없습니다.", HttpStatus.BAD_REQUEST),
     INVALID_FILE_TYPE("지원하지 않는 파일 형식입니다. (jpg, jpeg, png, gif, webp만 가능)", HttpStatus.BAD_REQUEST),
     FILE_TOO_LARGE("파일 크기는 5MB를 초과할 수 없습니다.", HttpStatus.BAD_REQUEST),
+    CANNOT_ASSIGN_USER_GUEST_BOTH("회원과 비회원을 동시에 지정할 수 없습니다.", HttpStatus.BAD_REQUEST),
 
     // 쿠폰 관련
     DUPLICATE_COUPON_NAME("이미 존재하는 쿠폰명입니다.", HttpStatus.CONFLICT),
@@ -82,7 +84,7 @@ public enum ServiceExceptionCode {
     CANNOT_USE_COUPON("사용 불가능한 쿠폰입니다.", HttpStatus.BAD_REQUEST),
 
     // 쿠폰 등록 관련
-    CAN_NOT_REGISTER_COUPON("등록할 수 없는 쿠폰입니다.", HttpStatus.BAD_REQUEST),
+    CANNOT_REGISTER_COUPON("등록할 수 없는 쿠폰입니다.", HttpStatus.BAD_REQUEST),
     INVALID_COUPON_CODE("유효하지 않은 쿠폰 코드입니다.", HttpStatus.NOT_FOUND),
     ALREADY_REGISTERED_COUPON("이미 등록된 쿠폰입니다.", HttpStatus.CONFLICT),
     ALREADY_ASSIGNED_COUPON("이미 다른 사용자에게 할당된 쿠폰입니다.", HttpStatus.CONFLICT),
@@ -105,11 +107,14 @@ public enum ServiceExceptionCode {
     // 적립금 관련
     INSUFFICIENT_POINTS("보유 적립금이 부족합니다.", HttpStatus.BAD_REQUEST),
     POINTS_MINIMUM_USE("적립금은 최소 1,000원 이상 사용 가능합니다.", HttpStatus.BAD_REQUEST),
+    POINTS_MINIMUM_ADD("적립금은 0 이상이어야 합니다.", HttpStatus.BAD_REQUEST),
     POINTS_EXCEED_LIMIT("적립금은 결제 금액의 50%까지만 사용 가능합니다.", HttpStatus.BAD_REQUEST),
 
     // ========== 500 Internal Server Error ==========
     JSON_PROCESSING_ERROR("Json 데이터 처리 중 에러가 발생하였습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
     FILE_UPLOAD_FAILED("파일 업로드에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+    FILE_UPLOAD_FAILED_REVIEW_SIZE("이미지는 최대 5개까지 업로드 가능합니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+    FILE_UPLOAD_FAILED_PRODUCT_SIZE("이미지는 최대 10개까지 업로드 가능합니다.", HttpStatus.INTERNAL_SERVER_ERROR),
     ;
 
     final String message;

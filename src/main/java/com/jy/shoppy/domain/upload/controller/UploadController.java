@@ -2,6 +2,8 @@ package com.jy.shoppy.domain.upload.controller;
 
 import com.jy.shoppy.domain.upload.dto.ImageUploadResponse;
 import com.jy.shoppy.domain.upload.service.ImageUploadService;
+import com.jy.shoppy.global.exception.ServiceException;
+import com.jy.shoppy.global.exception.ServiceExceptionCode;
 import com.jy.shoppy.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +29,7 @@ public class UploadController {
     public ResponseEntity<ApiResponse<List<ImageUploadResponse>>> uploadProductImages(
             @RequestParam("files") List<MultipartFile> files) {
         if (files.size() > 10) {
-            throw new IllegalArgumentException("이미지는 최대 10개까지 업로드 가능합니다.");
+            throw new ServiceException(ServiceExceptionCode.FILE_UPLOAD_FAILED_PRODUCT_SIZE);
         }
         List<String> imageUrls = imageUploadService.uploadImages(files, "products");
         List<ImageUploadResponse> responses = imageUrls.stream()
@@ -41,7 +43,7 @@ public class UploadController {
     public ResponseEntity<ApiResponse<List<ImageUploadResponse>>> uploadReviewImages(
             @RequestParam("files") List<MultipartFile> files) {
         if (files.size() > 5) {
-            throw new IllegalArgumentException("이미지는 최대 5개까지 업로드 가능합니다.");
+            throw new ServiceException(ServiceExceptionCode.FILE_UPLOAD_FAILED_REVIEW_SIZE);
         }
         List<String> imageUrls = imageUploadService.uploadImages(files, "reviews");
         List<ImageUploadResponse> responses = imageUrls.stream()

@@ -26,7 +26,7 @@ public class RestAuthenticationFailureHandler implements AuthenticationFailureHa
         if (exception instanceof BadCredentialsException) {
             errorCode = ServiceExceptionCode.INVALID_CREDENTIALS;
         } else if (exception instanceof UsernameNotFoundException) {
-            errorCode = ServiceExceptionCode.USER_NOT_FOUND;
+            errorCode = ServiceExceptionCode.CANNOT_FOUND_USER;
         } else {
             errorCode = ServiceExceptionCode.AUTHENTICATION_FAILED;
         }

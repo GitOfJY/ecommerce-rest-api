@@ -2,45 +2,43 @@ package com.jy.shoppy.domain.cart.dto;
 
 import com.jy.shoppy.global.exception.ServiceException;
 import com.jy.shoppy.global.exception.ServiceExceptionCode;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
 
 @Getter
-@AllArgsConstructor
-@NoArgsConstructor
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
+@Schema(description = "장바구니 상품 응답")
 public class CartProductResponse {
-    // 회원: CartProduct.id, 비회원: 임시 UUID
-    private Long id;
+    @Schema(description = "장바구니 상품 ID / 비회원: 임시 UUID")
+    Long id;
 
-    private Long productId;
-    private String productName;
+    @Schema(description = "상품 ID")
+    Long productId;
 
-    private String color;
-    private String size;
-    private Integer quantity;
-    private BigDecimal additionalPrice;
+    @Schema(description = "상품명")
+    String productName;
 
-    private BigDecimal price;
-    private BigDecimal totalPrice;
+    @Schema(description = "상품 이미지 URL")
+    String imageUrl;
 
-    // 수량 증가 (장바구니 담기에서 사용)
-    public void addQuantity(int quantity) {
-        this.quantity += quantity;
-        this.totalPrice = this.price.multiply(BigDecimal.valueOf(this.quantity));
-    }
+    @Schema(description = "선택한 색상")
+    String color;
 
-    public void updateOptions(String color, String size, int quantity) {
-        this.color = color;
-        this.size = size;
-        if (quantity <= 0) {
-            throw new ServiceException(ServiceExceptionCode.INVALID_QUANTITY);
-        }
-        this.quantity = quantity;
-        this.totalPrice = this.price.multiply(BigDecimal.valueOf(this.quantity));
-    }
+    @Schema(description = "선택한 사이즈")
+    String size;
+
+    @Schema(description = "개당 가격")
+    BigDecimal price;
+
+    @Schema(description = "수량")
+    Integer quantity;
+
+    @Schema(description = "총 가격 (price × quantity)")
+    BigDecimal totalPrice;
 }

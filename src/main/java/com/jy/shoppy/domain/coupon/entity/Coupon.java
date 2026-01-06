@@ -6,6 +6,8 @@ import com.jy.shoppy.domain.coupon.dto.UpdateCouponRequest;
 import com.jy.shoppy.domain.coupon.entity.type.CouponApplicationType;
 import com.jy.shoppy.domain.coupon.entity.type.DiscountType;
 import com.jy.shoppy.domain.prodcut.entity.Product;
+import com.jy.shoppy.global.exception.ServiceException;
+import com.jy.shoppy.global.exception.ServiceExceptionCode;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -231,7 +233,7 @@ public class Coupon {
      */
     public void addProduct(Product product) {
         if (this.applicationType != CouponApplicationType.PRODUCT) {
-            throw new IllegalStateException("상품별 쿠폰이 아닙니다.");
+            throw new ServiceException(ServiceExceptionCode.CANNOT_REGISTER_COUPON);
         }
 
         CouponProduct couponProduct = CouponProduct.builder()
@@ -247,7 +249,7 @@ public class Coupon {
      */
     public void addCategory(Category category) {
         if (this.applicationType != CouponApplicationType.CATEGORY) {
-            throw new IllegalStateException("카테고리별 쿠폰이 아닙니다.");
+            throw new ServiceException(ServiceExceptionCode.CANNOT_REGISTER_COUPON);
         }
 
         CouponCategory couponCategory = CouponCategory.builder()
