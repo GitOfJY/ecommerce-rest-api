@@ -66,6 +66,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/orders/guest").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/orders/guest/cancel").permitAll()
 
+                        // ===== 장바구니 - 비회원/회원 모두 허용 =====
+                        .requestMatchers("/api/cart/**").permitAll()
+
                         // ===== 쿠폰 - 코드 등록은 인증 필요
                         .requestMatchers(HttpMethod.GET, "/api/coupons/code/**").permitAll()  // 쿠폰 코드 조회
                         .requestMatchers(HttpMethod.POST, "/api/coupons/**").authenticated()  // 쿠폰 등록

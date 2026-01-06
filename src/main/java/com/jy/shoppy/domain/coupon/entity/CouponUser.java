@@ -132,23 +132,6 @@ public class CouponUser {
     }
 
     /**
-     * 할인 금액 계산
-     */
-    public BigDecimal calculateDiscount(BigDecimal orderAmount) {
-        if (!isAvailable()) {
-            return BigDecimal.ZERO;
-        }
-        return coupon.calculateDiscount(orderAmount);
-    }
-
-    /**
-     * 특정 사용자의 쿠폰인지 확인
-     */
-    public boolean isOwnedBy(Long userId) {
-        return this.user != null && this.user.getId().equals(userId);
-    }
-
-    /**
      * 쿠폰 복구 (주문 취소 시)
      */
     public void restore() {

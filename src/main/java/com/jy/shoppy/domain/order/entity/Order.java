@@ -82,13 +82,13 @@ public class Order {
                                     Integer pointsUsed
                                     ) {
         if (user == null && guest == null) {
-            throw new IllegalArgumentException("주문자 정보가 필요합니다");
+            throw new ServiceException(ServiceExceptionCode.CANNOT_FOUND_ORDER_USER);
         }
         if (user != null && guest != null) {
-            throw new IllegalArgumentException("회원과 비회원을 동시에 지정할 수 없습니다");
+            throw new ServiceException(ServiceExceptionCode.CANNOT_ASSIGN_USER_GUEST_BOTH);
         }
         if (user != null && deliveryAddress == null) {
-            throw new IllegalArgumentException("회원 주문은 배송지가 필요합니다");
+            throw new ServiceException(ServiceExceptionCode.DELIVERY_ADDRESS_INFO_REQUIRED_FOR_USER);
         }
 
         Order order = Order.builder()

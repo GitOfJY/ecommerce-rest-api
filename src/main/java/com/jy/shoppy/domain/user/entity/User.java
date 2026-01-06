@@ -4,6 +4,8 @@ import com.jy.shoppy.domain.auth.dto.RegisterUserRequest;
 import com.jy.shoppy.domain.order.entity.Order;
 import com.jy.shoppy.domain.user.dto.UpdateUserRequest;
 import com.jy.shoppy.domain.user.entity.type.UserStatus;
+import com.jy.shoppy.global.exception.ServiceException;
+import com.jy.shoppy.global.exception.ServiceExceptionCode;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -77,7 +79,7 @@ public class User {
      */
     public void addPoints(int amount) {
         if (amount < 0) {
-            throw new IllegalArgumentException("적립금은 0 이상이어야 합니다");
+            throw new ServiceException(ServiceExceptionCode.POINTS_MINIMUM_ADD);
         }
         this.points += amount;
     }
@@ -86,11 +88,8 @@ public class User {
      * 적립금 사용
      */
     public void usePoints(int amount) {
-        if (amount < 0) {
-            throw new IllegalArgumentException("사용 금액은 0 이상이어야 합니다");
-        }
         if (this.points < amount) {
-            throw new IllegalArgumentException("보유 적립금이 부족합니다");
+            throw new ServiceException(ServiceExceptionCode.INSUFFICIENT_POINTS);
         }
         this.points -= amount;
     }

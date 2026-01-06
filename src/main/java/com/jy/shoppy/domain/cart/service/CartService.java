@@ -8,6 +8,10 @@ import com.jy.shoppy.domain.cart.mapper.CartMapper;
 import com.jy.shoppy.domain.cart.repository.CartProductRepository;
 import com.jy.shoppy.domain.cart.repository.CartQueryRepository;
 import com.jy.shoppy.domain.cart.repository.CartRepository;
+import com.jy.shoppy.domain.coupon.dto.MaxDiscountCouponResponse;
+import com.jy.shoppy.domain.coupon.service.CouponService;
+import com.jy.shoppy.domain.order.dto.OrderProductsRequest;
+import com.jy.shoppy.domain.prodcut.dto.OrderProductRequest;
 import com.jy.shoppy.domain.prodcut.entity.Product;
 import com.jy.shoppy.domain.prodcut.entity.ProductOption;
 import com.jy.shoppy.domain.prodcut.repository.ProductOptionRepository;
@@ -23,15 +27,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
 @AllArgsConstructor
 public class CartService {
+    private final CouponService couponService;
     private final CartRepository cartRepository;
     private final UserRepository userRepository;
     private final CartProductRepository cartProductRepository;
@@ -106,27 +113,19 @@ public class CartService {
         List<CartProductResponse> guestCart = getGuestCart(session);
 
         // 같은 상품 + 같은 옵션 찾기
-        Optional<CartProductResponse> existingProduct = guestCart.stream()
-                .filter(p -> p.getProductId().equals(request.getProductId()) &&
-                        isSameOption(p, request.getColor(), request.getSize()))
-                .findFirst();
+        int existingIndex = findGuestCartItemIndex(guestCart, request.getProductId(), request.getColor(), request.getSize());
 
-        if (existingProduct.isPresent()) {
-            existingProduct.get().addQuantity(request.getQuantity());
+        if (existingIndex >= 0) {
+            CartProductResponse existing = guestCart.get(existingIndex);
+            CartProductResponse updated = increaseGuestCartItemQuantity(existing, request.getQuantity());
+            guestCart.set(existingIndex, updated);
         } else {
+            // 새 상품 추가
             Product product = productRepository.findById(request.getProductId())
                     .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_PRODUCT));
 
-            guestCart.add(CartProductResponse.builder()
-                            .id(System.currentTimeMillis())  // 임시 ID (타임스탬프)
-                            .productId(request.getProductId())
-                            .productName(product.getName())
-                            .color(request.getColor())
-                            .size(request.getSize())
-                            .price(product.getPrice())
-                            .quantity(request.getQuantity())
-                            .totalPrice(product.getPrice().multiply(BigDecimal.valueOf(request.getQuantity())))
-                    .build());
+            CartProductResponse newItem = createGuestCartItem(product, request.getColor(), request.getSize(), request.getQuantity());
+            guestCart.add(newItem);
         }
 
         session.setAttribute(GUEST_CART_KEY, guestCart);
@@ -152,9 +151,92 @@ public class CartService {
         }
     }
 
+    /**
+     * 세션에서 비회원 장바구니 조회
+     */
+    @SuppressWarnings("unchecked")
     private List<CartProductResponse> getGuestCart(HttpSession session) {
         List<CartProductResponse> cart = (List<CartProductResponse>) session.getAttribute(GUEST_CART_KEY);
         return cart != null ? cart : new ArrayList<>();
+    }
+
+    /**
+     * 비회원 장바구니 아이템 생성 (새로운 DTO 생성)
+     */
+    private CartProductResponse createGuestCartItem(Product product, String color, String size, int quantity) {
+        // 옵션 가격 계산
+        BigDecimal price = product.getPrice();
+        if (color != null || size != null) {
+            ProductOption option = productOptionRepository
+                    .findByProductIdAndColorAndSize(product.getId(), color, size)
+                    .orElseThrow(() -> new ServiceException(ServiceExceptionCode.INVALID_PRODUCT_OPTION));
+            price = price.add(option.getAdditionalPrice());
+        }
+
+        // 총 가격 계산
+        BigDecimal totalPrice = price.multiply(BigDecimal.valueOf(quantity));
+
+        return CartProductResponse.builder()
+                .id(System.currentTimeMillis())  // 임시 ID
+                .productId(product.getId())
+                .productName(product.getName())
+                .imageUrl(product.getThumbnailUrl())
+                .color(color)
+                .size(size)
+                .price(price)
+                .quantity(quantity)
+                .totalPrice(totalPrice)
+                .build();
+    }
+
+    /**
+     * 비회원 장바구니 아이템 수량 증가 (새로운 DTO 생성)
+     */
+    private CartProductResponse increaseGuestCartItemQuantity(CartProductResponse existing, int additionalQuantity) {
+        int newQuantity = existing.getQuantity() + additionalQuantity;
+        BigDecimal newTotalPrice = existing.getPrice().multiply(BigDecimal.valueOf(newQuantity));
+
+        return CartProductResponse.builder()
+                .id(existing.getId())
+                .productId(existing.getProductId())
+                .productName(existing.getProductName())
+                .imageUrl(existing.getImageUrl())
+                .color(existing.getColor())
+                .size(existing.getSize())
+                .price(existing.getPrice())
+                .quantity(newQuantity)
+                .totalPrice(newTotalPrice)
+                .build();
+    }
+
+    /**
+     * 비회원 장바구니에서 상품 인덱스 찾기 (상품ID + 옵션)
+     */
+    private int findGuestCartItemIndex(
+            List<CartProductResponse> cart,
+            Long productId,
+            String color,
+            String size
+    ) {
+        for (int i = 0; i < cart.size(); i++) {
+            CartProductResponse item = cart.get(i);
+            if (item.getProductId().equals(productId) && isSameOption(item, color, size)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * 비회원 장바구니에서 ID로 인덱스 찾기
+     */
+    private int findGuestCartItemIndexById(List<CartProductResponse> cart, Long id) {
+        for (int i = 0; i < cart.size(); i++) {
+            if (cart.get(i).getId().equals(id)) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     public CartProductResponse updateOption(Account account, Long cartProductId, UpdateCartOptionRequest request, HttpSession session) {
@@ -193,21 +275,37 @@ public class CartService {
     private CartProductResponse updateOptionForGuest(Long cartProductId, UpdateCartOptionRequest request, HttpSession session) {
         List<CartProductResponse> guestCart = getGuestCart(session);
 
-        CartProductResponse cartProduct = guestCart.stream()
-                .filter(p -> p.getId().equals(cartProductId))
-                .findFirst()
-                .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CART_ITEM_NOT_FOUND));
+        // 해당 아이템 찾기
+        int index = findGuestCartItemIndexById(guestCart, cartProductId);
+        if (index < 0) {
+            throw new ServiceException(ServiceExceptionCode.CART_ITEM_NOT_FOUND);
+        }
 
+        CartProductResponse existing = guestCart.get(index);
+
+        // 재고 확인
         validateAndCheckStock(
-                cartProduct.getProductId(),
+                existing.getProductId(),
                 request.getColor(),
                 request.getSize(),
                 request.getQuantity()
         );
 
-        cartProduct.updateOptions(request.getColor(), request.getSize(), request.getQuantity());
+        // 옵션 변경 (Service에서 처리)
+        Product product = productRepository.findById(existing.getProductId())
+                .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_PRODUCT));
+
+        CartProductResponse updated = createGuestCartItem(
+                product,
+                request.getColor(),
+                request.getSize(),
+                request.getQuantity()
+        );
+
+        guestCart.set(index, updated);
         session.setAttribute(GUEST_CART_KEY, guestCart);
-        return cartProduct;
+
+        return updated;
     }
 
     public void deleteCartByIds(Account account, DeleteCartProductRequest productIds, HttpSession session) {
@@ -259,5 +357,157 @@ public class CartService {
                     .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_CART));
             cartProductRepository.deleteByCartId(cart.getId());
         }
+    }
+
+    /**
+     * 장바구니 종합 정보 조회 (회원 전용)
+     * - 상품 총액
+     * - 회원 등급 할인
+     * - 최대 쿠폰 할인
+     * - 적립 예정 포인트
+     * - 최종 결제 금액
+     */
+    @Transactional(readOnly = true)
+    public CartSummaryResponse getCartSummary(Account account) {
+        Long userId = account.getAccountId();
+
+        // 1. 회원 정보 조회 (등급 정보 포함)
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_USER));
+
+        // 2. 회원 장바구니 조회 (fetch join으로 N+1 방지)
+        Cart cart = cartQueryRepository.findCartWithProducts(userId)
+                .orElseThrow(() -> new ServiceException(ServiceExceptionCode.CANNOT_FOUND_CART));
+
+        // 3. 장바구니가 비어있는지 확인
+        if (cart.getCartProducts().isEmpty()) {
+            return createEmptySummary();
+        }
+
+        // 4. 상품 총액 계산 (옵션 가격 포함)
+        BigDecimal totalAmount = calculateTotalAmount(cart);
+
+        // 5. 회원 등급 할인 계산
+        BigDecimal memberGradeDiscountRate = user.getUserGrade().getDiscountRate();
+        BigDecimal memberGradeDiscountAmount = totalAmount
+                .multiply(memberGradeDiscountRate)
+                .divide(BigDecimal.valueOf(100), 0, RoundingMode.DOWN);
+
+        // 6. 등급 할인 적용 후 금액
+        BigDecimal amountAfterGradeDiscount = totalAmount.subtract(memberGradeDiscountAmount);
+
+        // 7. 장바구니 → OrderProductsRequest 변환
+        OrderProductsRequest orderRequest = convertCartToOrderRequest(cart);
+
+        // 8. 최대 할인 쿠폰 계산
+        MaxDiscountCouponResponse maxCoupon = couponService.calculateMaxDiscount(orderRequest, account);
+
+        // 9. 최종 결제 금액 = 등급 할인 적용 후 금액 - 쿠폰 할인
+        BigDecimal finalPaymentAmount = amountAfterGradeDiscount.subtract(maxCoupon.getMaxDiscountAmount());
+
+        // 10. 적립 예정 포인트 계산
+        BigDecimal pointRate = user.getUserGrade().getPointRate();
+        Integer expectedPoints = finalPaymentAmount
+                .multiply(pointRate)
+                .divide(BigDecimal.valueOf(100), 0, RoundingMode.DOWN)
+                .intValue();
+
+        // 11. 총 할인 금액
+        BigDecimal totalDiscountAmount = memberGradeDiscountAmount.add(maxCoupon.getMaxDiscountAmount());
+
+        // 12. 장바구니 상품 목록
+        List<CartProductResponse> cartProducts = cartMapper.toResponses(cart);
+
+        return CartSummaryResponse.builder()
+                .totalAmount(totalAmount)
+                .memberGradeDiscountRate(memberGradeDiscountRate)
+                .memberGradeDiscountAmount(memberGradeDiscountAmount)
+                .maxCouponDiscountAmount(maxCoupon.getMaxDiscountAmount())
+                .totalDiscountAmount(totalDiscountAmount)
+                .finalPaymentAmount(finalPaymentAmount)
+                .expectedPoints(expectedPoints)
+                .pointRate(pointRate)
+                .bestCoupon(maxCoupon.getBestCoupon())
+                .applicableCoupons(maxCoupon.getApplicableCoupons())
+                .cartProducts(cartProducts)
+                .build();
+    }
+
+    /**
+     * 장바구니 상품 총액 계산 (옵션 가격 포함)
+     */
+    private BigDecimal calculateTotalAmount(Cart cart) {
+        return cart.getCartProducts().stream()
+                .map(this::calculateCartProductAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    /**
+     * 개별 장바구니 상품 금액 계산 (옵션 가격 포함)
+     */
+    private BigDecimal calculateCartProductAmount(CartProduct cartProduct) {
+        Product product = cartProduct.getProduct();
+        BigDecimal price = product.getPrice();
+
+        // 옵션이 있는 경우 옵션 가격 추가
+        String color = cartProduct.getSelectedColor();
+        String size = cartProduct.getSelectedSize();
+
+        if (color != null || size != null) {
+            ProductOption option = productOptionRepository
+                    .findByProductIdAndColorAndSize(product.getId(), color, size)
+                    .orElse(null);
+
+            if (option != null) {
+                price = price.add(option.getAdditionalPrice());
+            }
+        }
+
+        // 가격 × 수량
+        return price.multiply(BigDecimal.valueOf(cartProduct.getQuantity()));
+    }
+
+    /**
+     * 빈 장바구니 응답 생성
+     */
+    private CartSummaryResponse createEmptySummary() {
+        return CartSummaryResponse.builder()
+                .totalAmount(BigDecimal.ZERO)
+                .memberGradeDiscountRate(BigDecimal.ZERO)
+                .memberGradeDiscountAmount(BigDecimal.ZERO)
+                .maxCouponDiscountAmount(BigDecimal.ZERO)
+                .totalDiscountAmount(BigDecimal.ZERO)
+                .finalPaymentAmount(BigDecimal.ZERO)
+                .expectedPoints(0)
+                .pointRate(BigDecimal.ZERO)
+                .bestCoupon(null)
+                .applicableCoupons(List.of())
+                .cartProducts(List.of())
+                .build();
+    }
+
+    /**
+     * 장바구니 → OrderProductsRequest 변환
+     */
+    private OrderProductsRequest convertCartToOrderRequest(Cart cart) {
+        List<OrderProductRequest> orderProducts = cart.getCartProducts().stream()
+                .map(this::convertCartProductToOrderProduct)
+                .collect(Collectors.toList());
+
+        return OrderProductsRequest.builder()
+                .products(orderProducts)
+                .build();
+    }
+
+    /**
+     * CartProduct → OrderProductRequest 변환
+     */
+    private OrderProductRequest convertCartProductToOrderProduct(CartProduct cartProduct) {
+        return OrderProductRequest.builder()
+                .productId(cartProduct.getProduct().getId())
+                .color(cartProduct.getSelectedColor())
+                .size(cartProduct.getSelectedSize())
+                .quantity(cartProduct.getQuantity())
+                .build();
     }
 }
