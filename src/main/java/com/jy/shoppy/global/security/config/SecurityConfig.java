@@ -44,6 +44,8 @@ public class SecurityConfig {
         http
                 .securityMatcher("/api/**")
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/admin/products/sync").permitAll()
+
                         // ===== Public 경로 =====
                         .requestMatchers(SECURITY_EXCLUDE_PATHS).permitAll()
 

@@ -11,5 +11,6 @@ public record SearchProductCond(
         BigDecimal minPrice,
         BigDecimal maxPrice,
         String productKeyword,
-        StockStatus stockStatus
+        StockStatus stockStatus,
+        Boolean isOrderable
 ) {}

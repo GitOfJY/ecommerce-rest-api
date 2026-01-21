@@ -53,11 +53,24 @@ public class ProductController {
     @Operation(
             summary = "상품 검색 API (DB 검색)",
             description = "상품을 검색합니다." +
-                    "(검색 및 필터링 조건: 카테고리, 가격 범위, 상품명 키워드, 재고상태)"
+                    "(검색 및 필터링 조건: 카테고리, 가격 범위, 상품명 키워드, 재고상태, 주문가능여부)"
     )
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<Page<ProductResponse>>> searchProducts(SearchProductCond cond, Pageable pageable) {
         return ResponseEntity.ok(ApiResponse.success(productService.searchProductsPage(cond, pageable), HttpStatus.OK));
+    }
+
+    @Operation(
+            summary = "내부/외부 상품 목록 조회",
+            description = "카테고리, 주문가능여부, 가격, 키워드로 필터링하고 페이징 처리합니다."
+    )
+    @GetMapping
+    public ResponseEntity<ApiResponse<Page<ProductResponse>>> getProducts(
+            SearchProductCond cond,
+            Pageable pageable
+    ) {
+        Page<ProductResponse> response = productService.searchProductsPage(cond, pageable);
+        return ResponseEntity.ok(ApiResponse.success(response, HttpStatus.OK));
     }
 
     @Operation(

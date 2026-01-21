@@ -43,7 +43,8 @@ public class ProductQueryRepository {
                         priceGoe(cond.minPrice()),
                         priceLoe(cond.maxPrice()),
                         productKeywordContains(cond.productKeyword()),
-                        stockStatusEq(cond.stockStatus())
+                        stockStatusEq(cond.stockStatus()),
+                        isOrderableEq(cond.isOrderable())
                 )
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -60,7 +61,8 @@ public class ProductQueryRepository {
                         priceGoe(cond.minPrice()),
                         priceLoe(cond.maxPrice()),
                         productKeywordContains(cond.productKeyword()),
-                        stockStatusEq(cond.stockStatus())
+                        stockStatusEq(cond.stockStatus()),
+                        isOrderableEq(cond.isOrderable())
                 );
 
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
@@ -134,6 +136,10 @@ public class ProductQueryRepository {
 
     private BooleanExpression productKeywordContains(String productKeyword) {
         return productKeyword != null ? product.name.containsIgnoreCase(productKeyword) : null;
+    }
+
+    private BooleanExpression isOrderableEq(Boolean isOrderable) {
+        return isOrderable != null ? product.isOrderable.eq(isOrderable) : null;
     }
 
     /**
