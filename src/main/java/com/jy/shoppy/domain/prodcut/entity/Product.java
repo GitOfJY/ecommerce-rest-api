@@ -2,7 +2,7 @@ package com.jy.shoppy.domain.prodcut.entity;
 
 import com.jy.shoppy.domain.category.entity.CategoryProduct;
 import com.jy.shoppy.domain.order.entity.OrderProduct;
-import com.jy.shoppy.domain.prodcut.dto.CreateProductRequest;
+import com.jy.shoppy.domain.prodcut.entity.type.ProductSource;
 import com.jy.shoppy.domain.prodcut.entity.type.StockStatus;
 import com.jy.shoppy.domain.prodcut.dto.UpdateProductRequest;
 import jakarta.persistence.*;
@@ -24,12 +24,37 @@ import java.util.List;
 @Builder
 @Table(
         name = "products",
-        uniqueConstraints = @UniqueConstraint(name = "uk_product_name", columnNames = "name")
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_product_name", columnNames = "name"),
+                @UniqueConstraint(name = "uk_external_product_id", columnNames = "externalProductId")
+        },
+        indexes = {
+                @Index(name = "idx_product_source", columnList = "source"),
+                @Index(name = "idx_product_orderable", columnList = "isOrderable")
+        }
 )
 public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    // 외부 상품 ID (외부 상품만 값이 있음, 내부 상품은 null)
+    @Column(unique = true)
+    private String externalProductId;
+
+    // 상품 출처 (INTERNAL / EXTERNAL)
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private ProductSource source = ProductSource.INTERNAL;
+
+    // 마지막 외부 동기화 시점
+    private LocalDateTime lastSyncedAt;
+
+    // 주문 가능 여부 (외부 상품: stock > 0 이면 true)
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean isOrderable = true;
 
     @Column(nullable = false, length = 255)
     private String name;
@@ -163,5 +188,54 @@ public class Product {
                 .findFirst()
                 .map(ProductImage::getImageUrl)
                 .orElse(null);
+    }
+
+    /**
+     * 외부 상품 데이터로 업데이트
+     */
+    public void updateFromExternal(String name, String description,
+                                   BigDecimal price) {
+        this.name = name;
+        this.description = description;
+        this.price = price;
+        this.lastSyncedAt = LocalDateTime.now();
+    }
+
+    /**
+     * 외부 상품 여부 확인
+     */
+    public boolean isExternal() {
+        return this.source == ProductSource.EXTERNAL;
+    }
+
+    /**
+     * 동기화 시간 갱신 (변경 없이 동기화만 확인된 경우)
+     */
+    public void markSynced() {
+        this.lastSyncedAt = LocalDateTime.now();
+    }
+
+    /**
+     * 주문 불가 처리 (외부에서 삭제된 상품)
+     */
+    public void markAsNotOrderable() {
+        this.isOrderable = false;
+        this.lastSyncedAt = LocalDateTime.now();
+    }
+
+    /**
+     * 주문 가능 상태 변경
+     */
+    public void updateOrderable(boolean isOrderable) {
+        this.isOrderable = isOrderable;
+    }
+
+    public void updateFromExternal(String name, String description,
+                                   BigDecimal price, boolean isOrderable) {
+        this.name = name;
+        this.description = description;
+        this.price = price;
+        this.isOrderable = isOrderable;
+        this.lastSyncedAt = LocalDateTime.now();
     }
 }

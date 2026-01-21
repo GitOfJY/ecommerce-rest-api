@@ -110,6 +110,12 @@ public enum ServiceExceptionCode {
     POINTS_MINIMUM_ADD("적립금은 0 이상이어야 합니다.", HttpStatus.BAD_REQUEST),
     POINTS_EXCEED_LIMIT("적립금은 결제 금액의 50%까지만 사용 가능합니다.", HttpStatus.BAD_REQUEST),
 
+    // 외부 상품 연동
+    EXTERNAL_API_ERROR("외부 API 호출에 실패했습니다.", HttpStatus.SERVICE_UNAVAILABLE),
+    EXTERNAL_API_TIMEOUT("외부 API 응답 시간이 초과되었습니다.", HttpStatus.GATEWAY_TIMEOUT),
+    EXTERNAL_PRODUCT_NOT_FOUND("외부 상품을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    PRODUCT_SYNC_FAILED("상품 동기화에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+
     // ========== 500 Internal Server Error ==========
     JSON_PROCESSING_ERROR("Json 데이터 처리 중 에러가 발생하였습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
     FILE_UPLOAD_FAILED("파일 업로드에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),

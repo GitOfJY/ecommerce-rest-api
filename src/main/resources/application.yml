@@ -37,9 +37,26 @@ spring:
     restart:
       enabled: false
 
+  # ========== 스케줄링 설정 ==========
+  task:
+    scheduling:
+      pool:
+        size: 2
+
 springdoc:
   swagger-ui:
     enabled: true
 
 server:
   port: 8080
+
+# ========== 외부 상품 API 설정 ==========
+external:
+  product:
+    api:
+      base-url: http://localhost:3001  # 외부 API 서버 주소
+      connect-timeout: 5000            # 연결 타임아웃 (ms)
+      read-timeout: 10000              # 읽기 타임아웃 (ms)
+      page-size: 20                    # 페이지당 상품 수
+    sync:
+      cron: "0 0 * * * *"              # 매 시간 정각 (초 분 시 일 월 요일)
